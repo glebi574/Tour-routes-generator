@@ -3,9 +3,9 @@
 #include <vector>
 
 //Случайное число типа int от a до b
-int random(int , int);
+int random(int, int);
 //Случайное число типа float от a до b
-float random(float , float);
+float random(float, float);
 //True или False с некоторым шансом
 bool chance(int);
 //Поиск элемента в векторе

@@ -2,54 +2,61 @@
 
 #include <iostream>
 #include <vector>
+#include <SFML/Graphics.hpp>
+#include <SFML/System.hpp>
+#include <SFML/Window.hpp>
+using namespace sf;
 
 class Population {
 private:
 
-	static constexpr float speed = 1.4f;
-	short amount;
-	short points;
-	short attempt = 1;
+	const float point_radius = 12.f;
+	const float line_width = 5.f;
 
-	struct map_part {
+	int points = 0; //количество пунктов
+	int attempt = 1; //номер генерации
+
+	struct Point {
 		std::vector<float> connections;
-		float time;
-		float price;
-		float score;
+		float time = 0.f;
+		float price = 0.f;
+		float score = 0.f;
+		CircleShape obj;
 	};
-	std::vector<map_part> map;
+	std::vector<Point> map; //карта, содержащая все пункты и расстояния между ними
 
-	struct route {
-		std::vector<short> path;
-		std::vector<short> absent;
+	struct Connection {
+		int id[2];
+		RectangleShape rectangle;
+	};
+	std::vector<Connection> connections;
+
+	struct Route {
+		std::vector<int> path;
+		std::vector<int> absent;
 		float time;
 		float price;
 		float score;
 		float user_result;
 	};
-	std::vector<route> generation;
-	std::vector<route> best_results;
-
-	struct user_ratios {
-		int time;
-		int price;
-		int score;
-	};
-	user_ratios user_ratios;
-
-	struct route_parametres {
-		short first_point;
-		short last_point;
-	};
-	route_parametres route_parametres;
-
-	enum class mode { manual, random };
-	bool mode = (bool)mode::random;
+	std::vector<Route> generation; //популяция со всеми особями
+	std::vector<Route> best_results; //лучшие пути среди всех генераций
 
 public:
-	//Генерация маршрутов(количество особей, количество пунктов, начальный пункт, конечный пункт)
-	//\param количество маршрутов, максимальное количество точек в пути, начальный пункт, конечный пункт
-	Population(short, short, short fp = 0, short lp = 0);
+
+	int amount = 20; //количество особей
+
+	struct RouteParametres {
+		int first_point = 0;
+		int last_point = 0;
+	} route_parametres; //начальная и конечная точки маршрута
+
+	struct UserRatios {
+		int time = 1;
+		int price = 1;
+		int score = 1;
+	} user_ratios; //важность каждого показателя
+
 	//Установка пользовательских коэффициентов
 	void set_user_ratios(int, int, int);
 	//Модификация маршрутов и подсчёт результатов
@@ -58,29 +65,32 @@ public:
 	void print_map();
 	//Вывод всех маршрутов
 	void print_population();
-	//Мутация всех маршрутов
-	//void Mutation();
+	//Отрисовка всех пунктов на карте
+	void draw(RenderWindow&);
 
 private:
-	friend std::ostream& operator<< (std::ostream&, const route&);
-	friend void create_graph(Population&);
+	friend std::ostream& operator<< (std::ostream&, const Route&);
 	//Генерация карты
 	void generate_map();
 	//Мутация конкретного маршрута
-	void mutation(route&);
-	//Скрещивание
-	void Crossing();
+	void mutation(Route&);
 	//Подсчёт результатов маршрута
-	void count_result(route&);
+	void count_result(Route&);
 	//Подсчёт результатов пользователя для всех маршрутов
 	void count_user_results();
 	//Добавление точки под определённым номером из массива отсутствующих точек
-	void add_point(route&, int);
+	void add_point_in_route(Route&, int);
 	//Удаление точки под определённым номером из маршрута
-	void remove_point(route&, int);
+	void remove_point_from_route(Route&, int);
 	//Перезаполнение массива отсутствующих точек
-	void update_absent(route&);
+	void update_absent(Route&);
 	//Проверка корректности маршрута
-	bool check_exceptions(std::vector<short>&);
+	bool check_exceptions(std::vector<int>&);
+	//Добавить точку на карту
+	void add_point(float, float);
+	//Добавить соединение между двумя точками
+	void add_connection(int, int);
 
+	friend class EventCallback;
+	friend class Interface;
 };

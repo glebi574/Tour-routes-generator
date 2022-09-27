@@ -3,11 +3,42 @@
 #include <cassert>
 #include "Functions.h"
 #include "Algorithm.h"
-	
-void Population::set_user_ratios(int t, int p, int s) {
-	user_ratios.time = t;
-	user_ratios.price = p;
-	user_ratios.score = s;
+
+void Population::generate_routes() {
+	generation.clear();
+	generation.resize(amount);
+	best_results.clear();
+	best_results.resize(4);
+	for (auto& g : generation) {
+		g.path.resize(random(4, points));
+
+		for (int i = 0; i < g.path.size(); ++i)
+			g.path[i] = i;
+		if (g.path.front() != route_parametres.first_point) {
+			int p = find(g.path, route_parametres.first_point);
+			if (p == -1)
+				g.path.front() = route_parametres.first_point;
+			else
+				std::swap(g.path.front(), g.path[p]);
+		}
+		if (g.path.back() != route_parametres.last_point) {
+			int p = find(g.path, route_parametres.last_point);
+			if (p == -1)
+				g.path.back() = route_parametres.last_point;
+			else
+				std::swap(g.path.back(), g.path[p]);
+		}
+
+		update_absent(g);
+
+		while (!check_exceptions(g.path)) {
+			mutation(g);
+		}
+	}
+	for (int i = 0; i < 4; ++i) {
+		count_result(generation[i]);
+		best_results[i] = generation[i];
+	}
 }
 
 void Population::print_map() {
@@ -17,31 +48,6 @@ void Population::print_map() {
 		std::cout << "\n";
 	}
 	std::cout << std::endl;
-}
-
-void Population::generate_map() {
-	for (int i = 0; i < points; ++i) {
-		if (true) { //если mode == mode::random, то карта генерируется случайно
-			map[i].connections.resize(points);
-			map[i].time = random(40.0f, 600.0f);
-			map[i].price = random(1.0f, 10.0f);
-			map[i].score = random(0.0f, 10.0f);
-			for (int n = 0; n < map[i].connections.size(); ++n) {
-				if (i == n) {
-					map[i].connections[n] = 0.0f;
-					continue;
-				}
-				if (i > n) {
-					map[i].connections[n] = map[n].connections[i];
-					continue;
-				}
-				map[i].connections[n] = chance(80) ? random(60.0f, 700.0f) : 0.0f;
-			}
-		}
-		else { //иначе информация о точках заполняется при помощи готовой карты
-
-		}
-	}
 }
 
 void Population::count_result(Route &n) {
@@ -87,7 +93,8 @@ void Population::mutation(Route& g) {
 	switch (variant) {
 	case 1: //удаление пункта
 		x = random(1, g.path.size() - 2);
-		remove_point_from_route(g, x);
+		g.absent.push_back(g.path[x]);
+		g.path.erase(g.path.begin() + x);
 		break;
 	case 2: //смена мест двух пунктов
 		do {
@@ -98,7 +105,8 @@ void Population::mutation(Route& g) {
 		break;
 	case 3: //добавление пункта
 		x = random(0, g.absent.size() - 1);
-		add_point_in_route(g, x);
+		g.path.insert(g.path.begin() + random(1, g.path.size() - 2), g.absent[x]);
+		g.absent.erase(g.absent.begin() + x);
 		break;
 	case 4: //замена пункта маршрута на пункт, которого в маршруте нет
 		x = random(1, g.path.size() - 2);
@@ -140,16 +148,6 @@ void Population::cycle() {
 	std::cout << "\nПуть с наибольшей привлекательностью:\n" << best_results[2];
 	std::cout << "\nНаиболее подходящий для пользователя путь:\n" << best_results[3];
 	std::cout << ">\t>\t>\t>\t>\n" << std::endl;
-}
-
-void Population::add_point_in_route(Route &obj, int r) {
-	obj.path.insert(obj.path.begin() + random(1, obj.path.size() - 2), obj.absent[r]);
-	obj.absent.erase(obj.absent.begin() + r);
-}
-
-void Population::remove_point_from_route(Route &obj, int r) {
-	obj.absent.push_back(obj.path[r]);
-	obj.path.erase(obj.path.begin() + r);
 }
 
 void Population::update_absent(Route& g) {
@@ -199,6 +197,7 @@ void Population::add_point(float x, float y) {
 	for (auto& g : map) {
 		g.connections.emplace_back(0);
 	}
+	points += 1;
 }
 
 void Population::add_connection(int a, int b) {

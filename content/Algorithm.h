@@ -16,7 +16,7 @@ private:
 	int points = 0; //количество пунктов
 	int attempt = 1; //номер генерации
 
-	struct Point {
+	struct Point { //пункт
 		std::vector<float> connections;
 		float time = 0.f;
 		float price = 0.f;
@@ -25,13 +25,14 @@ private:
 	};
 	std::vector<Point> map; //карта, содержащая все пункты и расстояния между ними
 
-	struct Connection {
+	struct Connection { //отображаемый путь
 		int id[2];
+		float time = 0.f;
 		RectangleShape rectangle;
 	};
-	std::vector<Connection> connections;
+	std::vector<Connection> connections; //массив со всеми отрисовываемыми путями
 
-	struct Route {
+	struct Route { //маршрут
 		std::vector<int> path;
 		std::vector<int> absent;
 		float time;
@@ -45,6 +46,7 @@ private:
 public:
 
 	int amount = 20; //количество особей
+	int cycles_amount = 0; //количество циклов
 
 	struct RouteParametres {
 		int first_point = 0;
@@ -57,8 +59,8 @@ public:
 		int score = 1;
 	} user_ratios; //важность каждого показателя
 
-	//Установка пользовательских коэффициентов
-	void set_user_ratios(int, int, int);
+	//Регенерация основных параметров, используемых алгоритмом и создание особей
+	void generate_routes();
 	//Модификация маршрутов и подсчёт результатов
 	void cycle();
 	//Вывод карты
@@ -70,18 +72,12 @@ public:
 
 private:
 	friend std::ostream& operator<< (std::ostream&, const Route&);
-	//Генерация карты
-	void generate_map();
 	//Мутация конкретного маршрута
 	void mutation(Route&);
 	//Подсчёт результатов маршрута
 	void count_result(Route&);
 	//Подсчёт результатов пользователя для всех маршрутов
 	void count_user_results();
-	//Добавление точки под определённым номером из массива отсутствующих точек
-	void add_point_in_route(Route&, int);
-	//Удаление точки под определённым номером из маршрута
-	void remove_point_from_route(Route&, int);
 	//Перезаполнение массива отсутствующих точек
 	void update_absent(Route&);
 	//Проверка корректности маршрута
@@ -91,6 +87,5 @@ private:
 	//Добавить соединение между двумя точками
 	void add_connection(int, int);
 
-	friend class EventCallback;
 	friend class Interface;
 };

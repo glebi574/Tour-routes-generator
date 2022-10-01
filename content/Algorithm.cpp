@@ -66,11 +66,11 @@ void Population::count_result(Route &n) {
 void Population::count_user_results() {
 	float args[3] = {0, 0, 0};
 	for (auto& g : generation) {
-		if (g.time > args[0])
+		if (g.time > best_results[0].time)
 			args[0] = g.time;
-		if (g.price > args[1])
+		if (g.price > best_results[1].price)
 			args[1] = g.price;
-		if (g.score > args[2])
+		if (g.score > best_results[2].score)
 			args[2] = g.score;
 	}
 	for (auto& g : generation) {
@@ -211,7 +211,7 @@ void Population::add_connection(int a, int b) {
 	float ang = atan2(p2.y - p1.y, p2.x - p1.x);
 	connection.rectangle.move(p1.x + point_radius - line_width * cos(ang + 1.57f) / 2.f, p1.y + point_radius - line_width * sin(ang + 1.57f) / 2.f);
 	connection.rectangle.rotate(180.0f / 3.1416f * ang);
-	connection.rectangle.setFillColor(Color(100, 100, 100));
+	connection.rectangle.setFillColor(IColor::Gray);
 	connection.rectangle.setOutlineThickness(2.f);
 	connection.rectangle.setOutlineColor(Color::Black);
 	connections.emplace_back(connection);

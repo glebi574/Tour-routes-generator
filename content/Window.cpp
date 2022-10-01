@@ -4,7 +4,6 @@
 
 Interface::Interface(std::string str) {
 	font.loadFromFile(str);
-	temp_string = "";
 	temp_text = Text("", font, 16);
 	temp_text.setFillColor(Color::Black);
 }
@@ -40,6 +39,13 @@ bool Interface::if_mouse_in_rectangle(Event& event, RectangleShape& rectangle) {
 		return true;
 	}
 	return false;
+}
+
+bool Interface::if_mouse_in_point(Event& event, CircleShape& circle, Population& g) {
+	Vector2f pos = circle.getPosition();
+	float dx = event.mouseButton.x - pos.x - g.point_radius;
+	float dy = event.mouseButton.y - pos.y - g.point_radius;
+	return (sqrt(dx * dx + dy * dy) < (g.point_radius + 2.f));
 }
 
 void Interface::add_string(String str, int size, float x, float y) {
@@ -83,139 +89,119 @@ void Interface::add_window_rectangle(float width, float x1, float y1, float x2, 
 void Interface::input_callback(Window& window, Population& f, Event& event) {
 	//Режим ввода
 	if (input_mode) {
-		if (event.key.code == Keyboard::Return) {
+		if (event.key.code == Keyboard::Return) { //Нажатие клавиши ввода
 			input_mode = false;
-			if (input_fields[input_field_id].type)
+			if (input_fields[input_field_id].type) //Изменение значения, на которое указывает ptr, на введённое
 				*(float*)input_fields[input_field_id].ptr = std::stof(std::string(temp_string));
 			else
 				*(int*)input_fields[input_field_id].ptr = std::stoi(std::string(temp_string));
 			input_fields[input_field_id].rectangle.setFillColor(Color::Transparent);
 			temp_string = "";
 			temp_text.setString("");
+			if (f.map.size() == 0) //Обновление параметров пункта, если возможно
+				return;
+			f.map[point_id].time = selected_point.time;
+			f.map[point_id].price = selected_point.price;
+			f.map[point_id].score = selected_point.score;
+			if (f.connections.size() == 0) //Обновление параметров пути, если возможно
+				return;
+			f.map[f.connections[connection_id].id[0]].connections[f.connections[connection_id].id[1]]
+				= selected_connection.time;
+			f.map[f.connections[connection_id].id[1]].connections[f.connections[connection_id].id[0]]
+				= selected_connection.time;
 			return;
 		}
-		if (event.type == Event::TextEntered)
-		{
-			temp_string += event.text.unicode;
-			temp_text.setString(temp_string);
+		if (event.key.code == Keyboard::BackSpace) { //Нажатие backspase
+			if (temp_string.size() != 0) //Удаление 1 введённого символа, если возможно
+				temp_string.pop_back();
+			return;
 		}
-		return;
+		if (event.type == Event::TextEntered) //Ввод остальных символов с клавиатуры
+		{
+			temp_string += event.text.unicode; //Увеличение строки на введённый символ
+			temp_text.setString(temp_string); //Обновление отображаемого текста
+			return;
+		}
 	}
-	//Режим обработки нажатия
 	if (event.type != Event::MouseButtonReleased)
 		return;
 	//Работа с картой
 	if (event.mouseButton.x < 1000) { //Проверка позиции
-		if (mode) {
-			if (event.mouseButton.button == Mouse::Left) { //Выделить точку при нажатии ЛКМ
-				for (int i = 0; i < f.map.size(); ++i) {
-					Vector2f pos = f.map[i].obj.getPosition();
-					float dx = event.mouseButton.x - pos.x - f.point_radius;
-					float dy = event.mouseButton.y - pos.y - f.point_radius;
-					if (sqrt(dx * dx + dy * dy) < f.point_radius + 2.f) {
-						f.map[p2_id].obj.setFillColor(Color::Red);
-						f.map[i].obj.setFillColor(Color(80, 80, 240));
-						p1_id = i;
-						p2_id = i;
-						selected_point = f.map[i];
-						break;
-					}
-				}
+		if (event.mouseButton.button == Mouse::Right) { //Выделить точку при нажатии ПКМ
+			for (int i = 0; i < f.map.size(); ++i) {
+				if (!if_mouse_in_point(event, f.map[i].obj, f))
+					continue;
+				f.map[point_id].obj.setFillColor(Color::Red);
+				f.map[i].obj.setFillColor(IColor::Blue);
+				point_id = i;
+				selected_point = f.map[i];
+				return;
 			}
-			if (event.mouseButton.button == Mouse::Right) { //Создать, если возможно, путь при нажатии ПКМ
-				for (int i = 0; i < f.map.size(); ++i) {
-					Vector2f pos = f.map[i].obj.getPosition();
-					float dx = event.mouseButton.x - pos.x - f.point_radius;
-					float dy = event.mouseButton.y - pos.y - f.point_radius;
-					if (sqrt(dx * dx + dy * dy) < f.point_radius + 2.f) {
-						if (i != p2_id) {
-							for (auto& m : f.connections) {
-								if ((m.id[0] == i && m.id[1] == p2_id) || (m.id[0] == p2_id && m.id[1] == i))
-									return;
-							}
-							f.add_connection(i, p2_id);
-						}
-						break;
-					}
-				}
-			}
-			if (event.mouseButton.button == Mouse::Middle) { //Выделить линию при нажатии СКМ
-				for (int i = 0; i < f.connections.size(); ++i) {
-					auto pos_m = Mouse::getPosition(window);
-					auto pos_r = f.connections[i].rectangle.getPosition();
-					auto size = f.connections[i].rectangle.getSize();
-					float dy = pos_m.y - pos_r.y;
-					float dx = pos_m.x - pos_r.x;
-					float ang_r = f.connections[i].rectangle.getRotation() / 180.f * 3.14f;
-					float ang_rm = atan2(dy, dx);
-					float ang_m = ang_rm - ang_r;
-					float l_rm = sqrt(dy * dy + dx * dx);
-					pos_m.x = pos_r.x + l_rm * cos(ang_m);
-					pos_m.y = pos_r.y + l_rm * sin(ang_m);
-					if (pos_m.x >= pos_r.x && pos_m.y >= pos_r.y && pos_m.x <= pos_r.x + size.x && pos_m.y <= pos_r.y + size.y) {
-						f.connections[connection_id].rectangle.setFillColor(Color(100, 100, 100));
-						f.connections[connection_id].time = selected_connection.time;
-						f.map[f.connections[connection_id].id[0]].connections[f.connections[connection_id].id[1]] = selected_connection.time;
-						f.map[f.connections[connection_id].id[1]].connections[f.connections[connection_id].id[0]] = selected_connection.time;
-						f.connections[i].rectangle.setFillColor(Color(200, 140, 200));
-						connection_id = i;
-						selected_connection = f.connections[i];
-						break;
-					}
-				}
-			}
+			return;
 		}
-		else {
-			if (event.mouseButton.button == Mouse::Left) { //Создать точку при нажатии ЛКМ
-				for (auto& g : f.map) {
-					Vector2f pos = g.obj.getPosition();
-					float dx = event.mouseButton.x - pos.x - f.point_radius;
-					float dy = event.mouseButton.y - pos.y - f.point_radius;
-					if (sqrt(dx * dx + dy * dy) < 2.f * f.point_radius + 4.f)
-						return;
-				}
-				f.add_point(event.mouseButton.x - f.point_radius, event.mouseButton.y - f.point_radius);
+		if (!mode && event.mouseButton.button == Mouse::Left) { //Создать точку при нажатии ЛКМ в 1 режиме, если возможно
+			for (auto& g : f.map) {
+				Vector2f pos = g.obj.getPosition();
+				float dx = event.mouseButton.x - pos.x - f.point_radius;
+				float dy = event.mouseButton.y - pos.y - f.point_radius;
+				if (sqrt(dx * dx + dy * dy) < (2.f * f.point_radius + 4.f))
+					return;
 			}
-			if (event.mouseButton.button == Mouse::Right) { //Выделить точку при нажатии ПКМ
-				for (int i = 0; i < f.map.size(); ++i) {
-					Vector2f pos = f.map[i].obj.getPosition();
-					float dx = event.mouseButton.x - pos.x - f.point_radius;
-					float dy = event.mouseButton.y - pos.y - f.point_radius;
-					if (sqrt(dx * dx + dy * dy) < f.point_radius + 2.f) {
-						f.map[p1_id].obj.setFillColor(Color::Red);
-						f.map[p1_id].time = selected_point.time;
-						f.map[p1_id].price = selected_point.price;
-						f.map[p1_id].score = selected_point.score;
-						f.map[i].obj.setFillColor(Color::Green);
-						p1_id = i;
-						selected_point = f.map[i];
-						break;
-					}
+			f.add_point(event.mouseButton.x - f.point_radius, event.mouseButton.y - f.point_radius);
+			return;
+		}
+		switch (event.mouseButton.button) { //Режим редактирования путей
+		case Mouse::Left: //Провести путь от выделенной точки к данной, если возможно
+			for (int i = 0; i < f.map.size(); ++i) {
+				if ((!if_mouse_in_point(event, f.map[i].obj, f)) || (i == point_id))
+					continue;
+				for (auto& m : f.connections)
+					if ((m.id[0] == i && m.id[1] == point_id) || (m.id[0] == point_id && m.id[1] == i))
+						return;
+				f.add_connection(i, point_id);
+				return;
+			}
+			break;
+		case Mouse::Middle: //Выделение пути
+			for (int i = 0; i < f.connections.size(); ++i) {
+				Vector2i pos_m = Mouse::getPosition(window);
+				Vector2f pos_r = f.connections[i].rectangle.getPosition();
+				Vector2f size = f.connections[i].rectangle.getSize();
+				float dx = pos_m.x - pos_r.x, dy = pos_m.y - pos_r.y;
+				float ang = atan2(dy, dx) - f.connections[i].rectangle.getRotation() / 57.3f;
+				float l = sqrt(dy * dy + dx * dx);
+				pos_m.x = pos_r.x + l * cos(ang);
+				pos_m.y = pos_r.y + l * sin(ang);
+				if (pos_m.x >= pos_r.x && pos_m.y >= pos_r.y && pos_m.x <= pos_r.x + size.x && pos_m.y <= pos_r.y + size.y) {
+					f.connections[connection_id].rectangle.setFillColor(IColor::Gray);
+					f.connections[connection_id].time = selected_connection.time;
+					f.connections[i].rectangle.setFillColor(IColor::Pink);
+					connection_id = i;
+					selected_connection = f.connections[i];
+					return;
 				}
 			}
 		}
 		return;
 	}
 	//Работа с интерфейсом
-	for (int i = 0; i < mode_switch.rectangles.size(); ++i) {
+	for (int i = 0; i < mode_switch.rectangles.size(); ++i) { //Проверка переключения переключателя
 		if (if_mouse_in_rectangle(event, mode_switch.rectangles[i])) {
 			mode = !mode;
 			change_switch_selection(mode_switch, mode);
-			for (auto& g : f.map)
-				g.obj.setFillColor(Color::Red);
 			for (auto& g : f.connections)
-				g.rectangle.setFillColor(Color(100, 100, 100));
+				g.rectangle.setFillColor(IColor::Gray);
 			return;
 		}
 	}
-	if (if_mouse_in_rectangle(event, algorithm_button.rectangle)) {
+	if (if_mouse_in_rectangle(event, algorithm_button.rectangle)) { //Проверка нажатия кнопки
 		f.generate_routes();
 		for (int i = 0; i < f.cycles_amount; ++i) {
 			f.cycle();
 		}
 		return;
 	}
-	for (int i = 0; i < input_fields.size(); ++i) {
+	for (int i = 0; i < input_fields.size(); ++i) { //Проверка нажатия на поле ввода
 		if (if_mouse_in_rectangle(event, input_fields[i].rectangle)) {
 			input_mode = true;
 			input_field_id = i;
@@ -226,9 +212,9 @@ void Interface::input_callback(Window& window, Population& f, Event& event) {
 }
 
 void Interface::draw(RenderWindow& window) {
-	for (auto& g : window_rectangles)
+	for (auto& g : window_rectangles) //Отрисовка некоторых прямоугольников
 		window.draw(g);
-	for (auto& g : string_pointers) {
+	for (auto& g : string_pointers) { //Отрисовка строк, значение которых получено из указателя
 		std::stringstream str;
 		if (g.type)
 			str << std::fixed << std::setprecision(2) << *(float*)g.ptr;
@@ -237,7 +223,7 @@ void Interface::draw(RenderWindow& window) {
 		g.text.setString(str.str());
 		window.draw(g.text);
 	}
-	for (auto& g : input_fields) {
+	for (auto& g : input_fields) { //Отрисовка полей ввода
 		std::stringstream str;
 		if (g.type)
 			str << std::fixed << std::setprecision(2) << *(float*)g.ptr;
@@ -247,12 +233,12 @@ void Interface::draw(RenderWindow& window) {
 		window.draw(g.text);
 		window.draw(g.rectangle);
 	}
-	for (auto& g : strings)
+	for (auto& g : strings) //Отрисовка строк
 		window.draw(g);
-	for (auto& g : mode_switch.rectangles)
+	for (auto& g : mode_switch.rectangles) //Отрисовка переключателей
 		window.draw(g);
 	window.draw(mode_switch.main_rectangle);
-	window.draw(algorithm_button.rectangle);
+	window.draw(algorithm_button.rectangle); //Отрисовка кнопки
 	window.draw(algorithm_button.text);
-	window.draw(temp_text);
+	window.draw(temp_text); //Отрисовка введённого текста
 }

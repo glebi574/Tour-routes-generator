@@ -7,6 +7,12 @@
 #include <SFML/Window.hpp>
 using namespace sf;
 
+namespace IColor { //Дополнительные цвета
+	const Color Blue = Color(100, 100, 240);
+	const Color Pink = Color(200, 140, 200);
+	const Color Gray = Color(120, 120, 120);
+}
+
 class Population {
 private:
 

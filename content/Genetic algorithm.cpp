@@ -51,7 +51,7 @@ int main() {
     interface.add_string(L"Важность параметров", 24, x, y + 240);
     interface.add_string(L"Алгоритм", 24, x, y + 360);
 
-    interface.add_pointer_string(&interface.p1_id, 0, 16, x + 220, y);
+    interface.add_pointer_string(&interface.point_id, 0, 16, x + 220, y);
     
     interface.add_input_field(&interface.selected_point.time, 1, 16, x + 220, y + 20, x + 300, y + 40);
     interface.add_input_field(&interface.selected_point.price, 1, 16, x + 220, y + 40, x + 300, y + 60);
@@ -90,7 +90,7 @@ int main() {
                 window.close();
         }
 
-        window.clear(Color(255, 255, 255));
+        window.clear(Color::White);
         window.draw(interface_bg);
         window.draw(map_sprite);
         interface.draw(window);

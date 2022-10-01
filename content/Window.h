@@ -44,20 +44,20 @@ private:
 	RectangleShape rectangle_preset(float, float, float, float, float);
 	//Проверка наличия мыши в прямоугольнике
 	bool if_mouse_in_rectangle(Event&, RectangleShape&);
+	//Проверка наличия мыши в пункте
+	bool if_mouse_in_point(Event&, CircleShape&, Population&);
 	//Изменение выделенного переключателя
 	void change_switch_selection(Switch&, int);
 
 public:
 
-	int p1_id = 0; //выделенный пункт
-
-	int p2_id = 0; //пункт, к которому будет проведен путь, если возможно
+	int point_id = 0; //выделенный пункт
 	int connection_id = 0; //выделенный путь
 	bool mode = 0; //режим редактора
 
 	int input_field_id = 0; //выделенное поле ввода
 	bool input_mode = 0; //режим ввода
-	String temp_string = ""; //временная строка
+	std::string temp_string = ""; //временная строка
 	Text temp_text; //временный выводимый текст
 
 	Population::Point selected_point; //копия выделенного пункта

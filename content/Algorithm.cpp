@@ -64,7 +64,7 @@ void Population::count_result(Route &n) {
 }
 
 void Population::count_user_results() {
-	float args[3] = {0, 0, 0};
+	float args[3] = { best_results[0].time, best_results[1].price, best_results[2].score };
 	for (auto& g : generation) {
 		if (g.time > best_results[0].time)
 			args[0] = g.time;

@@ -52,7 +52,7 @@ private:
 public:
 
 	int amount = 20; //количество особей
-	int cycles_amount = 0; //количество циклов
+	int cycles_amount = 10; //количество циклов
 
 	struct RouteParametres {
 		int first_point = 0;

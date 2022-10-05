@@ -1,14 +1,14 @@
-#pragma once
+п»ї#pragma once
 
 #include <vector>
 
-//Случайное число типа int от a до b
+//РЎР»СѓС‡Р°Р№РЅРѕРµ С‡РёСЃР»Рѕ С‚РёРїР° int РѕС‚ a РґРѕ b
 int random(int, int);
-//Случайное число типа float от a до b
+//РЎР»СѓС‡Р°Р№РЅРѕРµ С‡РёСЃР»Рѕ С‚РёРїР° float РѕС‚ a РґРѕ b
 float random(float, float);
-//True или False с некоторым шансом
+//True РёР»Рё False СЃ РЅРµРєРѕС‚РѕСЂС‹Рј С€Р°РЅСЃРѕРј
 bool chance(int);
-//Поиск элемента в векторе
+//РџРѕРёСЃРє СЌР»РµРјРµРЅС‚Р° РІ РІРµРєС‚РѕСЂРµ
 template<typename T> int find(std::vector<T>& vec, T v) {
     for (T i = 0; i < vec.size(); ++i)
         if (vec[i] == v)

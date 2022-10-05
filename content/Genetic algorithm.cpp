@@ -15,8 +15,8 @@ int main() {
     Interface interface("FiraCode-Regular.ttf");
     map.loadFromFile("map.png");
 #else
-    Interface interface("C:\\Users\\user\\source\\repos\\Genetic algorithm\\FiraCode-Regular.ttf");
-    map.loadFromFile("C:\\Users\\user\\source\\repos\\Genetic algorithm\\map.png");
+    Interface interface("D:\\Code\\Main\\c++\\Genetic algorithm\\FiraCode-Regular.ttf");
+    map.loadFromFile("D:\\Code\\Main\\c++\\Genetic algorithm\\map.png");
 #endif
     Sprite map_sprite(map);
 

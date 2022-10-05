@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 
 #include <iostream>
 #include <vector>
@@ -7,7 +7,7 @@
 #include <SFML/Window.hpp>
 using namespace sf;
 
-namespace IColor { //Дополнительные цвета
+namespace IColor { //Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ С†РІРµС‚Р°
 	const Color Blue = Color(100, 100, 240);
 	const Color Pink = Color(200, 140, 200);
 	const Color Gray = Color(120, 120, 120);
@@ -19,26 +19,26 @@ private:
 	const float point_radius = 12.f;
 	const float line_width = 5.f;
 
-	int points = 0; //количество пунктов
-	int attempt = 1; //номер генерации
+	int points = 0; //РєРѕР»РёС‡РµСЃС‚РІРѕ РїСѓРЅРєС‚РѕРІ
+	int attempt = 1; //РЅРѕРјРµСЂ РіРµРЅРµСЂР°С†РёРё
 
-	struct Point { //пункт
+	struct Point { //РїСѓРЅРєС‚
 		std::vector<float> connections;
 		float time = 0.f;
 		float price = 0.f;
 		float score = 0.f;
 		CircleShape obj;
 	};
-	std::vector<Point> map; //карта, содержащая все пункты и расстояния между ними
+	std::vector<Point> map; //РєР°СЂС‚Р°, СЃРѕРґРµСЂР¶Р°С‰Р°СЏ РІСЃРµ РїСѓРЅРєС‚С‹ Рё СЂР°СЃСЃС‚РѕСЏРЅРёСЏ РјРµР¶РґСѓ РЅРёРјРё
 
-	struct Connection { //отображаемый путь
+	struct Connection { //РѕС‚РѕР±СЂР°Р¶Р°РµРјС‹Р№ РїСѓС‚СЊ
 		int id[2];
 		float time = 0.f;
 		RectangleShape rectangle;
 	};
-	std::vector<Connection> connections; //массив со всеми отрисовываемыми путями
+	std::vector<Connection> connections; //РјР°СЃСЃРёРІ СЃРѕ РІСЃРµРјРё РѕС‚СЂРёСЃРѕРІС‹РІР°РµРјС‹РјРё РїСѓС‚СЏРјРё
 
-	struct Route { //маршрут
+	struct Route { //РјР°СЂС€СЂСѓС‚
 		std::vector<int> path;
 		std::vector<int> absent;
 		float time;
@@ -46,51 +46,51 @@ private:
 		float score;
 		float user_result;
 	};
-	std::vector<Route> generation; //популяция со всеми особями
-	std::vector<Route> best_results; //лучшие пути среди всех генераций
+	std::vector<Route> generation; //РїРѕРїСѓР»СЏС†РёСЏ СЃРѕ РІСЃРµРјРё РѕСЃРѕР±СЏРјРё
+	std::vector<Route> best_results; //Р»СѓС‡С€РёРµ РїСѓС‚Рё СЃСЂРµРґРё РІСЃРµС… РіРµРЅРµСЂР°С†РёР№
 
 public:
 
-	int amount = 20; //количество особей
-	int cycles_amount = 10; //количество циклов
+	int amount = 20; //РєРѕР»РёС‡РµСЃС‚РІРѕ РѕСЃРѕР±РµР№
+	int cycles_amount = 10; //РєРѕР»РёС‡РµСЃС‚РІРѕ С†РёРєР»РѕРІ
 
 	struct RouteParametres {
 		int first_point = 0;
 		int last_point = 0;
-	} route_parametres; //начальная и конечная точки маршрута
+	} route_parametres; //РЅР°С‡Р°Р»СЊРЅР°СЏ Рё РєРѕРЅРµС‡РЅР°СЏ С‚РѕС‡РєРё РјР°СЂС€СЂСѓС‚Р°
 
 	struct UserRatios {
 		int time = 1;
 		int price = 1;
 		int score = 1;
-	} user_ratios; //важность каждого показателя
+	} user_ratios; //РІР°Р¶РЅРѕСЃС‚СЊ РєР°Р¶РґРѕРіРѕ РїРѕРєР°Р·Р°С‚РµР»СЏ
 
-	//Регенерация основных параметров, используемых алгоритмом и создание особей
+	//Р РµРіРµРЅРµСЂР°С†РёСЏ РѕСЃРЅРѕРІРЅС‹С… РїР°СЂР°РјРµС‚СЂРѕРІ, РёСЃРїРѕР»СЊР·СѓРµРјС‹С… Р°Р»РіРѕСЂРёС‚РјРѕРј Рё СЃРѕР·РґР°РЅРёРµ РѕСЃРѕР±РµР№
 	void generate_routes();
-	//Модификация маршрутов и подсчёт результатов
+	//РњРѕРґРёС„РёРєР°С†РёСЏ РјР°СЂС€СЂСѓС‚РѕРІ Рё РїРѕРґСЃС‡С‘С‚ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ
 	void cycle();
-	//Вывод карты
+	//Р’С‹РІРѕРґ РєР°СЂС‚С‹
 	void print_map();
-	//Вывод всех маршрутов
+	//Р’С‹РІРѕРґ РІСЃРµС… РјР°СЂС€СЂСѓС‚РѕРІ
 	void print_population();
-	//Отрисовка всех пунктов на карте
+	//РћС‚СЂРёСЃРѕРІРєР° РІСЃРµС… РїСѓРЅРєС‚РѕРІ РЅР° РєР°СЂС‚Рµ
 	void draw(RenderWindow&);
 
 private:
 	friend std::ostream& operator<< (std::ostream&, const Route&);
-	//Мутация конкретного маршрута
+	//РњСѓС‚Р°С†РёСЏ РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ РјР°СЂС€СЂСѓС‚Р°
 	void mutation(Route&);
-	//Подсчёт результатов маршрута
+	//РџРѕРґСЃС‡С‘С‚ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ РјР°СЂС€СЂСѓС‚Р°
 	void count_result(Route&);
-	//Подсчёт результатов пользователя для всех маршрутов
+	//РџРѕРґСЃС‡С‘С‚ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РґР»СЏ РІСЃРµС… РјР°СЂС€СЂСѓС‚РѕРІ
 	void count_user_results();
-	//Перезаполнение массива отсутствующих точек
+	//РџРµСЂРµР·Р°РїРѕР»РЅРµРЅРёРµ РјР°СЃСЃРёРІР° РѕС‚СЃСѓС‚СЃС‚РІСѓСЋС‰РёС… С‚РѕС‡РµРє
 	void update_absent(Route&);
-	//Проверка корректности маршрута
+	//РџСЂРѕРІРµСЂРєР° РєРѕСЂСЂРµРєС‚РЅРѕСЃС‚Рё РјР°СЂС€СЂСѓС‚Р°
 	bool check_exceptions(std::vector<int>&);
-	//Добавить точку на карту
+	//Р”РѕР±Р°РІРёС‚СЊ С‚РѕС‡РєСѓ РЅР° РєР°СЂС‚Сѓ
 	void add_point(float, float);
-	//Добавить соединение между двумя точками
+	//Р”РѕР±Р°РІРёС‚СЊ СЃРѕРµРґРёРЅРµРЅРёРµ РјРµР¶РґСѓ РґРІСѓРјСЏ С‚РѕС‡РєР°РјРё
 	void add_connection(int, int);
 
 	friend class Interface;

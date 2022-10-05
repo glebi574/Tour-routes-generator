@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 
 #include "Window.h"
 
@@ -87,23 +87,23 @@ void Interface::add_window_rectangle(float width, float x1, float y1, float x2, 
 }
 
 void Interface::input_callback(Window& window, Population& f, Event& event) {
-	//Режим ввода
+	//Р РµР¶РёРј РІРІРѕРґР°
 	if (input_mode) {
-		if (event.key.code == Keyboard::Return) { //Нажатие клавиши ввода
+		if (event.key.code == Keyboard::Return) { //РќР°Р¶Р°С‚РёРµ РєР»Р°РІРёС€Рё РІРІРѕРґР°
 			input_mode = false;
-			if (input_fields[input_field_id].type) //Изменение значения, на которое указывает ptr, на введённое
+			if (input_fields[input_field_id].type) //РР·РјРµРЅРµРЅРёРµ Р·РЅР°С‡РµРЅРёСЏ, РЅР° РєРѕС‚РѕСЂРѕРµ СѓРєР°Р·С‹РІР°РµС‚ ptr, РЅР° РІРІРµРґС‘РЅРЅРѕРµ
 				*(float*)input_fields[input_field_id].ptr = std::stof(std::string(temp_string));
 			else
 				*(int*)input_fields[input_field_id].ptr = std::stoi(std::string(temp_string));
 			input_fields[input_field_id].rectangle.setFillColor(Color::Transparent);
 			temp_string = "";
 			temp_text.setString("");
-			if (f.map.size() == 0) //Обновление параметров пункта, если возможно
+			if (f.map.size() == 0) //РћР±РЅРѕРІР»РµРЅРёРµ РїР°СЂР°РјРµС‚СЂРѕРІ РїСѓРЅРєС‚Р°, РµСЃР»Рё РІРѕР·РјРѕР¶РЅРѕ
 				return;
 			f.map[point_id].time = selected_point.time;
 			f.map[point_id].price = selected_point.price;
 			f.map[point_id].score = selected_point.score;
-			if (f.connections.size() == 0) //Обновление параметров пути, если возможно
+			if (f.connections.size() == 0) //РћР±РЅРѕРІР»РµРЅРёРµ РїР°СЂР°РјРµС‚СЂРѕРІ РїСѓС‚Рё, РµСЃР»Рё РІРѕР·РјРѕР¶РЅРѕ
 				return;
 			f.map[f.connections[connection_id].id[0]].connections[f.connections[connection_id].id[1]]
 				= selected_connection.time;
@@ -111,23 +111,23 @@ void Interface::input_callback(Window& window, Population& f, Event& event) {
 				= selected_connection.time;
 			return;
 		}
-		if (event.key.code == Keyboard::BackSpace) { //Нажатие backspase
-			if (temp_string.size() != 0) //Удаление 1 введённого символа, если возможно
+		if (event.key.code == Keyboard::BackSpace) { //РќР°Р¶Р°С‚РёРµ backspase
+			if (temp_string.size() != 0) //РЈРґР°Р»РµРЅРёРµ 1 РІРІРµРґС‘РЅРЅРѕРіРѕ СЃРёРјРІРѕР»Р°, РµСЃР»Рё РІРѕР·РјРѕР¶РЅРѕ
 				temp_string.pop_back();
 			return;
 		}
-		if (event.type == Event::TextEntered) //Ввод остальных символов с клавиатуры
+		if (event.type == Event::TextEntered) //Р’РІРѕРґ РѕСЃС‚Р°Р»СЊРЅС‹С… СЃРёРјРІРѕР»РѕРІ СЃ РєР»Р°РІРёР°С‚СѓСЂС‹
 		{
-			temp_string += event.text.unicode; //Увеличение строки на введённый символ
-			temp_text.setString(temp_string); //Обновление отображаемого текста
+			temp_string += event.text.unicode; //РЈРІРµР»РёС‡РµРЅРёРµ СЃС‚СЂРѕРєРё РЅР° РІРІРµРґС‘РЅРЅС‹Р№ СЃРёРјРІРѕР»
+			temp_text.setString(temp_string); //РћР±РЅРѕРІР»РµРЅРёРµ РѕС‚РѕР±СЂР°Р¶Р°РµРјРѕРіРѕ С‚РµРєСЃС‚Р°
 			return;
 		}
 	}
 	if (event.type != Event::MouseButtonReleased)
 		return;
-	//Работа с картой
-	if (event.mouseButton.x < 1000) { //Проверка позиции
-		if (event.mouseButton.button == Mouse::Right) { //Выделить точку при нажатии ПКМ
+	//Р Р°Р±РѕС‚Р° СЃ РєР°СЂС‚РѕР№
+	if (event.mouseButton.x < 1000) { //РџСЂРѕРІРµСЂРєР° РїРѕР·РёС†РёРё
+		if (event.mouseButton.button == Mouse::Right) { //Р’С‹РґРµР»РёС‚СЊ С‚РѕС‡РєСѓ РїСЂРё РЅР°Р¶Р°С‚РёРё РџРљРњ
 			for (int i = 0; i < f.map.size(); ++i) {
 				if (!if_mouse_in_point(event, f.map[i].obj, f))
 					continue;
@@ -139,7 +139,7 @@ void Interface::input_callback(Window& window, Population& f, Event& event) {
 			}
 			return;
 		}
-		if (!mode && event.mouseButton.button == Mouse::Left) { //Создать точку при нажатии ЛКМ в 1 режиме, если возможно
+		if (!mode && event.mouseButton.button == Mouse::Left) { //РЎРѕР·РґР°С‚СЊ С‚РѕС‡РєСѓ РїСЂРё РЅР°Р¶Р°С‚РёРё Р›РљРњ РІ 1 СЂРµР¶РёРјРµ, РµСЃР»Рё РІРѕР·РјРѕР¶РЅРѕ
 			for (auto& g : f.map) {
 				Vector2f pos = g.obj.getPosition();
 				float dx = event.mouseButton.x - pos.x - f.point_radius;
@@ -150,8 +150,8 @@ void Interface::input_callback(Window& window, Population& f, Event& event) {
 			f.add_point(event.mouseButton.x - f.point_radius, event.mouseButton.y - f.point_radius);
 			return;
 		}
-		switch (event.mouseButton.button) { //Режим редактирования путей
-		case Mouse::Left: //Провести путь от выделенной точки к данной, если возможно
+		switch (event.mouseButton.button) { //Р РµР¶РёРј СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ РїСѓС‚РµР№
+		case Mouse::Left: //РџСЂРѕРІРµСЃС‚Рё РїСѓС‚СЊ РѕС‚ РІС‹РґРµР»РµРЅРЅРѕР№ С‚РѕС‡РєРё Рє РґР°РЅРЅРѕР№, РµСЃР»Рё РІРѕР·РјРѕР¶РЅРѕ
 			for (int i = 0; i < f.map.size(); ++i) {
 				if ((!if_mouse_in_point(event, f.map[i].obj, f)) || (i == point_id))
 					continue;
@@ -162,7 +162,7 @@ void Interface::input_callback(Window& window, Population& f, Event& event) {
 				return;
 			}
 			break;
-		case Mouse::Middle: //Выделение пути
+		case Mouse::Middle: //Р’С‹РґРµР»РµРЅРёРµ РїСѓС‚Рё
 			for (int i = 0; i < f.connections.size(); ++i) {
 				Vector2i pos_m = Mouse::getPosition(window);
 				Vector2f pos_r = f.connections[i].rectangle.getPosition();
@@ -184,8 +184,8 @@ void Interface::input_callback(Window& window, Population& f, Event& event) {
 		}
 		return;
 	}
-	//Работа с интерфейсом
-	for (int i = 0; i < mode_switch.rectangles.size(); ++i) { //Проверка переключения переключателя
+	//Р Р°Р±РѕС‚Р° СЃ РёРЅС‚РµСЂС„РµР№СЃРѕРј
+	for (int i = 0; i < mode_switch.rectangles.size(); ++i) { //РџСЂРѕРІРµСЂРєР° РїРµСЂРµРєР»СЋС‡РµРЅРёСЏ РїРµСЂРµРєР»СЋС‡Р°С‚РµР»СЏ
 		if (if_mouse_in_rectangle(event, mode_switch.rectangles[i])) {
 			mode = !mode;
 			change_switch_selection(mode_switch, mode);
@@ -194,14 +194,14 @@ void Interface::input_callback(Window& window, Population& f, Event& event) {
 			return;
 		}
 	}
-	if (if_mouse_in_rectangle(event, algorithm_button.rectangle)) { //Проверка нажатия кнопки
+	if (if_mouse_in_rectangle(event, algorithm_button.rectangle)) { //РџСЂРѕРІРµСЂРєР° РЅР°Р¶Р°С‚РёСЏ РєРЅРѕРїРєРё
 		f.generate_routes();
 		for (int i = 0; i < f.cycles_amount; ++i) {
 			f.cycle();
 		}
 		return;
 	}
-	for (int i = 0; i < input_fields.size(); ++i) { //Проверка нажатия на поле ввода
+	for (int i = 0; i < input_fields.size(); ++i) { //РџСЂРѕРІРµСЂРєР° РЅР°Р¶Р°С‚РёСЏ РЅР° РїРѕР»Рµ РІРІРѕРґР°
 		if (if_mouse_in_rectangle(event, input_fields[i].rectangle)) {
 			input_mode = true;
 			input_field_id = i;
@@ -212,9 +212,9 @@ void Interface::input_callback(Window& window, Population& f, Event& event) {
 }
 
 void Interface::draw(RenderWindow& window) {
-	for (auto& g : window_rectangles) //Отрисовка некоторых прямоугольников
+	for (auto& g : window_rectangles) //РћС‚СЂРёСЃРѕРІРєР° РЅРµРєРѕС‚РѕСЂС‹С… РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєРѕРІ
 		window.draw(g);
-	for (auto& g : string_pointers) { //Отрисовка строк, значение которых получено из указателя
+	for (auto& g : string_pointers) { //РћС‚СЂРёСЃРѕРІРєР° СЃС‚СЂРѕРє, Р·РЅР°С‡РµРЅРёРµ РєРѕС‚РѕСЂС‹С… РїРѕР»СѓС‡РµРЅРѕ РёР· СѓРєР°Р·Р°С‚РµР»СЏ
 		std::stringstream str;
 		if (g.type)
 			str << std::fixed << std::setprecision(2) << *(float*)g.ptr;
@@ -223,7 +223,7 @@ void Interface::draw(RenderWindow& window) {
 		g.text.setString(str.str());
 		window.draw(g.text);
 	}
-	for (auto& g : input_fields) { //Отрисовка полей ввода
+	for (auto& g : input_fields) { //РћС‚СЂРёСЃРѕРІРєР° РїРѕР»РµР№ РІРІРѕРґР°
 		std::stringstream str;
 		if (g.type)
 			str << std::fixed << std::setprecision(2) << *(float*)g.ptr;
@@ -233,12 +233,12 @@ void Interface::draw(RenderWindow& window) {
 		window.draw(g.text);
 		window.draw(g.rectangle);
 	}
-	for (auto& g : strings) //Отрисовка строк
+	for (auto& g : strings) //РћС‚СЂРёСЃРѕРІРєР° СЃС‚СЂРѕРє
 		window.draw(g);
-	for (auto& g : mode_switch.rectangles) //Отрисовка переключателей
+	for (auto& g : mode_switch.rectangles) //РћС‚СЂРёСЃРѕРІРєР° РїРµСЂРµРєР»СЋС‡Р°С‚РµР»РµР№
 		window.draw(g);
 	window.draw(mode_switch.main_rectangle);
-	window.draw(algorithm_button.rectangle); //Отрисовка кнопки
+	window.draw(algorithm_button.rectangle); //РћС‚СЂРёСЃРѕРІРєР° РєРЅРѕРїРєРё
 	window.draw(algorithm_button.text);
-	window.draw(temp_text); //Отрисовка введённого текста
+	window.draw(temp_text); //РћС‚СЂРёСЃРѕРІРєР° РІРІРµРґС‘РЅРЅРѕРіРѕ С‚РµРєСЃС‚Р°
 }

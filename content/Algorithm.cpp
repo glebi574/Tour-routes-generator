@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 
 #include <cassert>
 #include "Functions.h"
@@ -50,9 +50,9 @@ void Population::print_map() {
 	std::cout << std::endl;
 }
 
-void Population::count_result(Route &n) {
+void Population::count_result(Route& n) {
 	n.time = 0;
-	n.price	= 0;
+	n.price = 0;
 	n.score = 0;
 	for (int i = 1; i < n.path.size(); ++i)
 		n.time += map[n.path[i - 1]].connections[n.path[i]];
@@ -74,16 +74,16 @@ void Population::count_user_results() {
 			args[2] = g.score;
 	}
 	for (auto& g : generation) {
-		g.user_result = (1.0f - g.time	/ args[0]) * user_ratios.time  +
+		g.user_result = (1.0f - g.time  / args[0]) * user_ratios.time  +
 						(1.0f - g.price / args[1]) * user_ratios.price +
-								g.score / args[2]  * user_ratios.score;
+								g.score / args[2] * user_ratios.score;
 	}
 }
 
 void Population::mutation(Route& g) {
-	int variant; //способ мутации особи
+	int variant; //СЃРїРѕСЃРѕР± РјСѓС‚Р°С†РёРё РѕСЃРѕР±Рё
 	int length = g.path.size();
-	if (length == 4) //ограничение по способам мутации
+	if (length == 4) //РѕРіСЂР°РЅРёС‡РµРЅРёРµ РїРѕ СЃРїРѕСЃРѕР±Р°Рј РјСѓС‚Р°С†РёРё
 		variant = random(2, 4);
 	else if (length == points)
 		variant = random(1, 2);
@@ -91,24 +91,24 @@ void Population::mutation(Route& g) {
 		variant = random(1, 4);
 	int x, y;
 	switch (variant) {
-	case 1: //удаление пункта
+	case 1: //СѓРґР°Р»РµРЅРёРµ РїСѓРЅРєС‚Р°
 		x = random(1, g.path.size() - 2);
 		g.absent.push_back(g.path[x]);
 		g.path.erase(g.path.begin() + x);
 		break;
-	case 2: //смена мест двух пунктов
+	case 2: //СЃРјРµРЅР° РјРµСЃС‚ РґРІСѓС… РїСѓРЅРєС‚РѕРІ
 		do {
 			x = random(1, g.path.size() - 2);
 			y = random(1, g.path.size() - 2);
 		} while (x == y);
 		std::swap(g.path[x], g.path[y]);
 		break;
-	case 3: //добавление пункта
+	case 3: //РґРѕР±Р°РІР»РµРЅРёРµ РїСѓРЅРєС‚Р°
 		x = random(0, g.absent.size() - 1);
 		g.path.insert(g.path.begin() + random(1, g.path.size() - 2), g.absent[x]);
 		g.absent.erase(g.absent.begin() + x);
 		break;
-	case 4: //замена пункта маршрута на пункт, которого в маршруте нет
+	case 4: //Р·Р°РјРµРЅР° РїСѓРЅРєС‚Р° РјР°СЂС€СЂСѓС‚Р° РЅР° РїСѓРЅРєС‚, РєРѕС‚РѕСЂРѕРіРѕ РІ РјР°СЂС€СЂСѓС‚Рµ РЅРµС‚
 		x = random(1, g.path.size() - 2);
 		y = random(0, g.absent.size() - 1);
 		std::swap(g.path[x], g.absent[y]);
@@ -119,11 +119,11 @@ void Population::mutation(Route& g) {
 void Population::cycle() {
 	for (auto& g : generation)
 		do mutation(g);
-		while (!check_exceptions(g.path));
+	while (!check_exceptions(g.path));
 	for (auto& g : generation)
 		count_result(g);
 	count_user_results();
-	Route* best[]{&generation[0], &generation[0], &generation[0], &generation[0]};
+	Route* best[]{ &generation[0], &generation[0], &generation[0], &generation[0] };
 	for (auto& g : generation) {
 		if (g.time < best[0]->time)
 			best[0] = &g;
@@ -143,10 +143,10 @@ void Population::cycle() {
 	if (best[3]->user_result > best_results[3].user_result)
 		best_results[3] = *best[3];
 
-	std::cout << ">\t>\t>\t>\t>\nПуть с наименьшим временем:\n" << best_results[0];
-	std::cout << "\nПуть с наименьшей стоимостью:\n" << best_results[1];
-	std::cout << "\nПуть с наибольшей привлекательностью:\n" << best_results[2];
-	std::cout << "\nНаиболее подходящий для пользователя путь:\n" << best_results[3];
+	std::cout << ">\t>\t>\t>\t>\nРџСѓС‚СЊ СЃ РЅР°РёРјРµРЅСЊС€РёРј РІСЂРµРјРµРЅРµРј:\n" << best_results[0];
+	std::cout << "\nРџСѓС‚СЊ СЃ РЅР°РёРјРµРЅСЊС€РµР№ СЃС‚РѕРёРјРѕСЃС‚СЊСЋ:\n" << best_results[1];
+	std::cout << "\nРџСѓС‚СЊ СЃ РЅР°РёР±РѕР»СЊС€РµР№ РїСЂРёРІР»РµРєР°С‚РµР»СЊРЅРѕСЃС‚СЊСЋ:\n" << best_results[2];
+	std::cout << "\nРќР°РёР±РѕР»РµРµ РїРѕРґС…РѕРґСЏС‰РёР№ РґР»СЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РїСѓС‚СЊ:\n" << best_results[3];
 	std::cout << ">\t>\t>\t>\t>\n" << std::endl;
 }
 
@@ -156,7 +156,7 @@ void Population::update_absent(Route& g) {
 			g.absent.push_back(i);
 }
 
-bool Population::check_exceptions(std::vector<int> &vec) {
+bool Population::check_exceptions(std::vector<int>& vec) {
 	for (int i = 1; i < vec.size(); ++i) {
 		if (map[vec[i - 1]].connections[vec[i]] == 0) return false;
 	}
@@ -171,8 +171,8 @@ std::ostream& operator<< (std::ostream& out, const Population::Route& p) {
 	for (auto& i : p.absent)
 		out << " " << i;
 #endif
-	out << "\nОбщее время пути: " << p.time << "\nОбщая стоимость путешествия: " << p.price <<
-		"\nОбщая оценка: " << p.score << "\nОценка этого пути относительно интересов пользователя: " << p.user_result << "\n";
+	out << "\nРћР±С‰РµРµ РІСЂРµРјСЏ РїСѓС‚Рё: " << p.time << "\nРћР±С‰Р°СЏ СЃС‚РѕРёРјРѕСЃС‚СЊ РїСѓС‚РµС€РµСЃС‚РІРёСЏ: " << p.price <<
+		"\nРћР±С‰Р°СЏ РѕС†РµРЅРєР°: " << p.score << "\nРћС†РµРЅРєР° СЌС‚РѕРіРѕ РїСѓС‚Рё РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ РёРЅС‚РµСЂРµСЃРѕРІ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: " << p.user_result << "\n";
 	return out;
 }
 

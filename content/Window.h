@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 
 #include "Algorithm.h"
 #include <sstream>
@@ -7,30 +7,30 @@
 class Interface {
 private:
 
-	Font font; //шрифт
-	std::vector<Text> strings; //отображаемые строки
-	std::vector<RectangleShape> window_rectangles; //некоторые прямоугольники интерфейса
+	Font font; //С€СЂРёС„С‚
+	std::vector<Text> strings; //РѕС‚РѕР±СЂР°Р¶Р°РµРјС‹Рµ СЃС‚СЂРѕРєРё
+	std::vector<RectangleShape> window_rectangles; //РЅРµРєРѕС‚РѕСЂС‹Рµ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєРё РёРЅС‚РµСЂС„РµР№СЃР°
 
-	struct Button { //структура кнопки
+	struct Button { //СЃС‚СЂСѓРєС‚СѓСЂР° РєРЅРѕРїРєРё
 		Text text;
 		RectangleShape rectangle;
 	};
-	Button algorithm_button; //кнопка, используемая для генерации определённого числа циклов алгоритма
+	Button algorithm_button; //РєРЅРѕРїРєР°, РёСЃРїРѕР»СЊР·СѓРµРјР°СЏ РґР»СЏ РіРµРЅРµСЂР°С†РёРё РѕРїСЂРµРґРµР»С‘РЅРЅРѕРіРѕ С‡РёСЃР»Р° С†РёРєР»РѕРІ Р°Р»РіРѕСЂРёС‚РјР°
 
-	struct Switch { //структура переключателя
+	struct Switch { //СЃС‚СЂСѓРєС‚СѓСЂР° РїРµСЂРµРєР»СЋС‡Р°С‚РµР»СЏ
 		std::vector<RectangleShape> rectangles;
 		RectangleShape main_rectangle;
 	};
-	Switch mode_switch; //переключатель режима редактора
+	Switch mode_switch; //РїРµСЂРµРєР»СЋС‡Р°С‚РµР»СЊ СЂРµР¶РёРјР° СЂРµРґР°РєС‚РѕСЂР°
 
-	struct PointerString { //строки, с помощью которых выводятся значения указателей на определённые переменные
+	struct PointerString { //СЃС‚СЂРѕРєРё, СЃ РїРѕРјРѕС‰СЊСЋ РєРѕС‚РѕСЂС‹С… РІС‹РІРѕРґСЏС‚СЃСЏ Р·РЅР°С‡РµРЅРёСЏ СѓРєР°Р·Р°С‚РµР»РµР№ РЅР° РѕРїСЂРµРґРµР»С‘РЅРЅС‹Рµ РїРµСЂРµРјРµРЅРЅС‹Рµ
 		Text text;
 		void* ptr;
 		bool type;
 	};
 	std::vector<PointerString> string_pointers;
 
-	struct InputField { //поле ввода
+	struct InputField { //РїРѕР»Рµ РІРІРѕРґР°
 		Text text;
 		void* ptr;
 		bool type;
@@ -38,48 +38,48 @@ private:
 	};
 	std::vector<InputField> input_fields;
 
-	//Создание стандартной строки
+	//РЎРѕР·РґР°РЅРёРµ СЃС‚Р°РЅРґР°СЂС‚РЅРѕР№ СЃС‚СЂРѕРєРё
 	Text text_preset(String, int, float, float);
-	//Создание стандартного прямоугольника
+	//РЎРѕР·РґР°РЅРёРµ СЃС‚Р°РЅРґР°СЂС‚РЅРѕРіРѕ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєР°
 	RectangleShape rectangle_preset(float, float, float, float, float);
-	//Проверка наличия мыши в прямоугольнике
+	//РџСЂРѕРІРµСЂРєР° РЅР°Р»РёС‡РёСЏ РјС‹С€Рё РІ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєРµ
 	bool if_mouse_in_rectangle(Event&, RectangleShape&);
-	//Проверка наличия мыши в пункте
+	//РџСЂРѕРІРµСЂРєР° РЅР°Р»РёС‡РёСЏ РјС‹С€Рё РІ РїСѓРЅРєС‚Рµ
 	bool if_mouse_in_point(Event&, CircleShape&, Population&);
-	//Изменение выделенного переключателя
+	//РР·РјРµРЅРµРЅРёРµ РІС‹РґРµР»РµРЅРЅРѕРіРѕ РїРµСЂРµРєР»СЋС‡Р°С‚РµР»СЏ
 	void change_switch_selection(Switch&, int);
 
 public:
 
-	int point_id = 0; //выделенный пункт
-	int connection_id = 0; //выделенный путь
-	bool mode = 0; //режим редактора
+	int point_id = 0; //РІС‹РґРµР»РµРЅРЅС‹Р№ РїСѓРЅРєС‚
+	int connection_id = 0; //РІС‹РґРµР»РµРЅРЅС‹Р№ РїСѓС‚СЊ
+	bool mode = 0; //СЂРµР¶РёРј СЂРµРґР°РєС‚РѕСЂР°
 
-	int input_field_id = 0; //выделенное поле ввода
-	bool input_mode = 0; //режим ввода
-	std::string temp_string = ""; //временная строка
-	Text temp_text; //временный выводимый текст
+	int input_field_id = 0; //РІС‹РґРµР»РµРЅРЅРѕРµ РїРѕР»Рµ РІРІРѕРґР°
+	bool input_mode = 0; //СЂРµР¶РёРј РІРІРѕРґР°
+	std::string temp_string = ""; //РІСЂРµРјРµРЅРЅР°СЏ СЃС‚СЂРѕРєР°
+	Text temp_text; //РІСЂРµРјРµРЅРЅС‹Р№ РІС‹РІРѕРґРёРјС‹Р№ С‚РµРєСЃС‚
 
-	Population::Point selected_point; //копия выделенного пункта
-	Population::Connection selected_connection; //копия выделенного пути
+	Population::Point selected_point; //РєРѕРїРёСЏ РІС‹РґРµР»РµРЅРЅРѕРіРѕ РїСѓРЅРєС‚Р°
+	Population::Connection selected_connection; //РєРѕРїРёСЏ РІС‹РґРµР»РµРЅРЅРѕРіРѕ РїСѓС‚Рё
 
-	//Конструктор
+	//РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ
 	Interface(std::string);
-	//Добавление строки
+	//Р”РѕР±Р°РІР»РµРЅРёРµ СЃС‚СЂРѕРєРё
 	void add_string(String str, int, float, float);
-	//Добавление переключателя редактора
+	//Р”РѕР±Р°РІР»РµРЅРёРµ РїРµСЂРµРєР»СЋС‡Р°С‚РµР»СЏ СЂРµРґР°РєС‚РѕСЂР°
 	void add_mode_switch(std::vector<std::vector<float>>);
-	//Добавление кнопки генерации
+	//Р”РѕР±Р°РІР»РµРЅРёРµ РєРЅРѕРїРєРё РіРµРЅРµСЂР°С†РёРё
 	void add_algorithm_button(String str, int, float, float, float, float);
-	//Добавление строки из указателя
+	//Р”РѕР±Р°РІР»РµРЅРёРµ СЃС‚СЂРѕРєРё РёР· СѓРєР°Р·Р°С‚РµР»СЏ
 	void add_pointer_string(void*, bool, int, float, float);
-	//Добавление поля ввода
+	//Р”РѕР±Р°РІР»РµРЅРёРµ РїРѕР»СЏ РІРІРѕРґР°
 	void add_input_field(void*, bool, int, float, float, float, float);
-	//Добавления стандартного прямоугольника на экран
+	//Р”РѕР±Р°РІР»РµРЅРёСЏ СЃС‚Р°РЅРґР°СЂС‚РЅРѕРіРѕ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєР° РЅР° СЌРєСЂР°РЅ
 	void add_window_rectangle(float, float, float, float, float);
-	//Обработка ввода
+	//РћР±СЂР°Р±РѕС‚РєР° РІРІРѕРґР°
 	void input_callback(Window&, Population&, Event&);
-	//Отрисовка всех объектов интерфейса
+	//РћС‚СЂРёСЃРѕРІРєР° РІСЃРµС… РѕР±СЉРµРєС‚РѕРІ РёРЅС‚РµСЂС„РµР№СЃР°
 	void draw(RenderWindow& window);
 
 	friend class Population;

@@ -65,6 +65,10 @@ public:
 		int score = 1;
 	} user_ratios; //важность каждого показателя
 
+	struct Results {
+		std::vector<Route> routes;
+	} results;
+
 	//Регенерация основных параметров, используемых алгоритмом и создание особей
 	void generate_routes();
 	//Модификация маршрутов и подсчёт результатов

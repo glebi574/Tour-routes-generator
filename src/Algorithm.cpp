@@ -66,7 +66,7 @@ void Population::count_result(Route& n) {
 void Population::count_user_results() {
 	float args[3] = { best_results[0].time, best_results[1].price, best_results[2].score };
 	for (auto& g : generation) {
-		if (g.time > best_results[0].time)
+		if (g.time  > best_results[0].time)
 			args[0] = g.time;
 		if (g.price > best_results[1].price)
 			args[1] = g.price;
@@ -74,9 +74,20 @@ void Population::count_user_results() {
 			args[2] = g.score;
 	}
 	for (auto& g : generation) {
-		g.user_result = (1.0f - g.time  / args[0]) * user_ratios.time  +
-						(1.0f - g.price / args[1]) * user_ratios.price +
-								g.score / args[2] * user_ratios.score;
+		if (g.price == 0)
+			g.user_result = (1.0f - g.time  / args[0]) * user_ratios.time + g.score / args[2]  * user_ratios.score;
+		else
+			g.user_result = (1.0f - g.time  / args[0]) * user_ratios.time  +
+							(1.0f - g.price / args[1]) * user_ratios.price +
+									g.score / args[2]  * user_ratios.score;
+	}
+	for (auto& g : best_results) {
+		if (g.price == 0)
+			g.user_result = (1.0f - g.time / args[0]) * user_ratios.time + g.score / args[2] * user_ratios.score;
+		else
+			g.user_result = (1.0f - g.time  / args[0]) * user_ratios.time  +
+							(1.0f - g.price / args[1]) * user_ratios.price +
+									g.score / args[2]  * user_ratios.score;
 	}
 }
 
@@ -143,11 +154,14 @@ void Population::cycle() {
 	if (best[3]->user_result > best_results[3].user_result)
 		best_results[3] = *best[3];
 
-	std::cout << ">\t>\t>\t>\t>\nПуть с наименьшим временем:\n" << best_results[0];
-	std::cout << "\nПуть с наименьшей стоимостью:\n" << best_results[1];
+	print_population();
+
+	std::cout << "\n\n\nПуть с наименьшим временем:\n" << best_results[0];
+	if (best_results[1].price != 0)
+		std::cout << "\nПуть с наименьшей стоимостью:\n" << best_results[1];
 	std::cout << "\nПуть с наибольшей привлекательностью:\n" << best_results[2];
 	std::cout << "\nНаиболее подходящий для пользователя путь:\n" << best_results[3];
-	std::cout << ">\t>\t>\t>\t>\n" << std::endl;
+	std::cout << "\n\n\n" << std::endl;
 }
 
 void Population::update_absent(Route& g) {
@@ -165,14 +179,18 @@ bool Population::check_exceptions(std::vector<int>& vec) {
 
 std::ostream& operator<< (std::ostream& out, const Population::Route& p) {
 	for (auto& i : p.path)
-		out << i << " ";
+		out << i << "  ";
 #ifndef NDEBUG
-	out << "\nabsent:";
-	for (auto& i : p.absent)
-		out << " " << i;
+	if (p.absent.size() != 0) {
+		out << "\nabsent:";
+		for (auto& i : p.absent)
+			out << "  " << i;
+	}
 #endif
-	out << "\nОбщее время пути: " << p.time << "\nОбщая стоимость путешествия: " << p.price <<
-		"\nОбщая оценка: " << p.score << "\nОценка этого пути относительно интересов пользователя: " << p.user_result << "\n";
+	out << "\nОбщее время пути: " << p.time << "\nОбщая оценка: " << p.score;
+	if (p.price != 0)
+		out << "\nОбщая стоимость путешествия: " << p.price;
+	out << "\nОценка этого пути относительно интересов пользователя: " << p.user_result << "\n";
 	return out;
 }
 
@@ -185,6 +203,10 @@ void Population::print_population() {
 
 void Population::add_point(float x, float y) {
 	Point point;
+#ifndef NDEBUG
+	point.time  = random(0.f, 20.f);
+	point.score = random(0.f, 10.f);
+#endif
 	for (int i = 0; i < map.size(); ++i) {
 		point.connections.emplace_back(0);
 	}
@@ -204,6 +226,12 @@ void Population::add_connection(int a, int b) {
 	Connection connection;
 	connection.id[0] = a;
 	connection.id[1] = b;
+#ifndef NDEBUG
+	float u = random(0.f, 20.f);
+	map[a].connections[b] = u;
+	map[b].connections[a] = u;
+	connection.time = u;
+#endif
 	auto& p1 = map[a].obj.getPosition();
 	auto& p2 = map[b].obj.getPosition();
 	float l = sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));

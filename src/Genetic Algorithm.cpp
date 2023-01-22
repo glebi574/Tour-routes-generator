@@ -11,13 +11,10 @@ int main() {
 
     Population g;
     Texture map;
-#if NDEBUG
     Interface interface("FiraCode-Regular.ttf");
+    Interface main_interface("FiraCode-Regular.ttf");
+    Interface results_interface("FiraCode-Regular.ttf");
     map.loadFromFile("map.png");
-#else
-    Interface interface("D:\\Code\\Main\\c++\\Genetic algorithm\\FiraCode-Regular.ttf");
-    map.loadFromFile("D:\\Code\\Main\\c++\\Genetic algorithm\\map.png");
-#endif
     Sprite map_sprite(map);
 
     ContextSettings s;
@@ -85,6 +82,7 @@ int main() {
         Event event;
         while (window.pollEvent(event))
         {
+            main_interface.input_callback(window, g, event);
             interface.input_callback(window, g, event);
             if (event.type == Event::Closed or event.type == Event::KeyReleased && event.key.code == Keyboard::Escape)
                 window.close();

@@ -14,7 +14,7 @@ namespace IColor { //Дополнительные цвета
 }
 
 class Population {
-private:
+public:
 
 	const float point_radius = 12.f;
 	const float line_width = 5.f;
@@ -41,15 +41,13 @@ private:
 	struct Route { //маршрут
 		std::vector<int> path;
 		std::vector<int> absent;
-		float time;
-		float price;
-		float score;
-		float user_result;
+		float time = 0.f;
+		float price = 0.f;
+		float score = 0.f;
+		float user_result = 0.f;
 	};
 	std::vector<Route> generation; //популяция со всеми особями
 	std::vector<Route> best_results; //лучшие пути среди всех генераций
-
-public:
 
 	int amount = 20; //количество особей
 	int cycles_amount = 10; //количество циклов
@@ -67,6 +65,18 @@ public:
 
 	struct Results {
 		std::vector<Route> routes;
+		int amount = 0;
+		std::vector<std::vector<Route>> best_routes = {};
+		void reset() {
+			routes.clear();
+			amount = 0;
+			for (auto& g : best_routes) {
+				g.clear();
+			}
+			for (int i = 0; i < 4; ++i) {
+				best_routes.push_back({});
+			}
+		}
 	} results;
 
 	//Регенерация основных параметров, используемых алгоритмом и создание особей
@@ -80,7 +90,6 @@ public:
 	//Отрисовка всех пунктов на карте
 	void draw(RenderWindow&);
 
-private:
 	friend std::ostream& operator<< (std::ostream&, const Route&);
 	//Мутация конкретного маршрута
 	void mutation(Route&);

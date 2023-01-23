@@ -162,6 +162,20 @@ void Population::cycle() {
 	std::cout << "\nПуть с наибольшей привлекательностью:\n" << best_results[2];
 	std::cout << "\nНаиболее подходящий для пользователя путь:\n" << best_results[3];
 	std::cout << "\n\n\n" << std::endl;
+
+	for (auto& g : generation) {
+		bool is_unique = true;
+		for (auto& u : results.routes) {
+			if (g.path == u.path) {
+				is_unique = false;
+				break;
+			}
+		}
+		if (is_unique) {
+			results.routes.push_back(g);
+		}
+	}
+
 }
 
 void Population::update_absent(Route& g) {

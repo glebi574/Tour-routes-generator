@@ -43,7 +43,7 @@ void Population::generate_routes() {
 
 void Population::print_map() {
 	for (auto& p : map) {
-		for (auto& l : p.connections)
+		for (auto& l : p->connections)
 			std::cout << l << "\t";
 		std::cout << "\n";
 	}
@@ -55,11 +55,11 @@ void Population::count_result(Route& n) {
 	n.price = 0;
 	n.score = 0;
 	for (int i = 1; i < n.path.size(); ++i)
-		n.time += map[n.path[i - 1]].connections[n.path[i]];
+		n.time += map[n.path[i - 1]]->connections[n.path[i]];
 	for (auto& g : n.path) {
-		n.time += map[g].time;
-		n.price += map[g].price;
-		n.score += map[g].score;
+		n.time += map[g]->time;
+		n.price += map[g]->price;
+		n.score += map[g]->score;
 	}
 }
 
@@ -176,6 +176,24 @@ void Population::cycle() {
 		}
 	}
 
+	float args[3] = { best_results[0].time, best_results[1].price, best_results[2].score };
+	for (auto& g : results.routes) {
+		if (g.time > best_results[0].time)
+			args[0] = g.time;
+		if (g.price > best_results[1].price)
+			args[1] = g.price;
+		if (g.score > best_results[2].score)
+			args[2] = g.score;
+	}
+	for (auto& g : results.routes) {
+		if (g.price == 0)
+			g.user_result = (1.0f - g.time / args[0]) * user_ratios.time + g.score / args[2] * user_ratios.score;
+		else
+			g.user_result = (1.0f - g.time / args[0]) * user_ratios.time +
+			(1.0f - g.price / args[1]) * user_ratios.price +
+			g.score / args[2] * user_ratios.score;
+	}
+
 }
 
 void Population::update_absent(Route& g) {
@@ -186,7 +204,7 @@ void Population::update_absent(Route& g) {
 
 bool Population::check_exceptions(std::vector<int>& vec) {
 	for (int i = 1; i < vec.size(); ++i) {
-		if (map[vec[i - 1]].connections[vec[i]] == 0) return false;
+		if (map[vec[i - 1]]->connections[vec[i]] == 0) return false;
 	}
 	return true;
 }
@@ -215,25 +233,26 @@ void Population::print_population() {
 	std::cout << std::endl;
 }
 
-void Population::add_point(float x, float y) {
-	Point point;
+Population::Point* Population::add_point(float x, float y) {
+	Point* point = new Point;
 #ifndef NDEBUG
-	point.time  = random(0.f, 20.f);
-	point.score = random(0.f, 10.f);
+	point->time  = random(0.f, 20.f);
+	point->score = random(0.f, 10.f);
 #endif
 	for (int i = 0; i < map.size(); ++i) {
-		point.connections.emplace_back(0);
+		point->connections.emplace_back(0);
 	}
-	point.obj = CircleShape(point_radius);
-	point.obj.setFillColor(Color::Red);
-	point.obj.setOutlineThickness(2.f);
-	point.obj.setOutlineColor(Color::Black);
-	point.obj.move(x, y);
-	map.emplace_back(point);
+	point->obj = CircleShape(point_radius);
+	point->obj.setFillColor(Color::Red);
+	point->obj.setOutlineThickness(2.f);
+	point->obj.setOutlineColor(Color::Black);
+	point->obj.move(x, y);
+	map.push_back(point);
 	for (auto& g : map) {
-		g.connections.emplace_back(0);
+		g->connections.emplace_back(0);
 	}
 	points += 1;
+	return point;
 }
 
 void Population::add_connection(int a, int b) {
@@ -242,12 +261,12 @@ void Population::add_connection(int a, int b) {
 	connection.id[1] = b;
 #ifndef NDEBUG
 	float u = random(0.f, 20.f);
-	map[a].connections[b] = u;
-	map[b].connections[a] = u;
+	map[a]->connections[b] = u;
+	map[b]->connections[a] = u;
 	connection.time = u;
 #endif
-	auto& p1 = map[a].obj.getPosition();
-	auto& p2 = map[b].obj.getPosition();
+	auto& p1 = map[a]->obj.getPosition();
+	auto& p2 = map[b]->obj.getPosition();
 	float l = sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
 	connection.rectangle = RectangleShape(Vector2f(l, line_width));
 	float ang = atan2(p2.y - p1.y, p2.x - p1.x);
@@ -261,7 +280,7 @@ void Population::add_connection(int a, int b) {
 
 void Population::draw(RenderWindow& window) {
 	for (auto& g : map)
-		window.draw(g.obj);
+		window.draw(g->obj);
 	for (auto& g : connections)
 		window.draw(g.rectangle);
 }

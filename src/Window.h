@@ -10,19 +10,20 @@ public:
 		Text text;
 		RectangleShape rectangle;
 	};
-	std::vector<Button> buttons;
+	std::vector<Button*> buttons;
 
 	struct Switch { //структура переключателя
 		std::vector<RectangleShape> rectangles;
 		RectangleShape main_rectangle;
 		int mode = 0;
 	};
-	std::vector <Switch> switches;
+	std::vector <Switch*> switches;
 
 	struct PointerString { //строки, с помощью которых выводятся значения указателей на определённые переменные
 		Text text;
 		void* ptr;
 		bool type;
+		bool is_str;
 	};
 	std::vector<PointerString> string_pointers;
 
@@ -31,14 +32,13 @@ public:
 		void* ptr;
 		bool type;
 		RectangleShape rectangle;
+		bool is_str;
 	};
 	std::vector<InputField> input_fields;
 
 	Font font; //шрифт
 	std::vector<Text> strings; //отображаемые строки
 	std::vector<RectangleShape> window_rectangles; //некоторые прямоугольники интерфейса
-	//Button algorithm_button; //кнопка, используемая для генерации определённого числа циклов алгоритма
-	//Switch mode_switch; //переключатель режима редактора
 
 	//Создание стандартной строки
 	Text text_preset(String, int, float, float);
@@ -49,42 +49,25 @@ public:
 	//Проверка наличия мыши в пункте
 	bool if_mouse_in_point(Event&, CircleShape&, Population&);
 
-	//int point_id = 0; //выделенный пункт
-	//int connection_id = 0; //выделенный путь
-	//bool mode = 0; //режим редактора
-
-	//int input_field_id = 0; //выделенное поле ввода
-	//bool input_mode = 0; //режим ввода
-	std::string temp_string = ""; //временная строка
+	std::wstring temp_string = L""; //временная строка
 	Text temp_text; //временный выводимый текст
-
-	//Population::Point selected_point; //копия выделенного пункта
-	//Population::Connection selected_connection; //копия выделенного пути
 
 	//Конструктор
 	Interface(std::string);
-
-	Button& add_button(String str, int, float, float, float, float);
-
-	Switch& add_switch(std::vector<std::vector<float>>);
+	//Создание кнопки
+	Button* add_button(String str, int, float, float, float, float);
+	//Создание переключателя
+	Switch* add_switch(std::vector<std::vector<float>>);
 	//Изменение выделенного переключателя
-	void change_switch_selection(Switch&, int);
+	void change_switch_selection(Switch*, int);
 	//Добавление строки
 	void add_string(String str, int, float, float);
-	//Добавление переключателя редактора
-	//void add_mode_switch(std::vector<std::vector<float>>);
-	//Добавление кнопки генерации
-	//void add_algorithm_button(String str, int, float, float, float, float);
 	//Добавление строки из указателя
-	void add_pointer_string(void*, bool, int, float, float);
+	void add_pointer_string(void*, bool, int, float, float, bool = false);
 	//Добавление поля ввода
-	void add_input_field(void*, bool, int, float, float, float, float);
+	void add_input_field(void*, bool, int, float, float, float, float, bool = false);
 	//Добавления стандартного прямоугольника на экран
 	void add_window_rectangle(float, float, float, float, float);
-	//Обработка ввода
-	//void input_callback(Window&, Population&, Event&);
 	//Отрисовка всех объектов интерфейса
 	void draw(RenderWindow& window);
-
-	friend class Population;
 };

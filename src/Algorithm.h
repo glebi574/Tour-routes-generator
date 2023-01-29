@@ -27,9 +27,10 @@ public:
 		float time = 0.f;
 		float price = 0.f;
 		float score = 0.f;
+		std::wstring name = L"";
 		CircleShape obj;
 	};
-	std::vector<Point> map; //карта, содержащая все пункты и расстояния между ними
+	std::vector<Point*> map; //карта, содержащая все пункты и расстояния между ними
 
 	struct Connection { //отображаемый путь
 		int id[2];
@@ -63,7 +64,7 @@ public:
 		int score = 1;
 	} user_ratios; //важность каждого показателя
 
-	struct Results {
+	struct Results { //Все уникальные маршруты, сгенерированные программой
 		std::vector<Route> routes;
 		int amount = 0;
 		std::vector<std::vector<Route>> best_routes = {};
@@ -102,7 +103,7 @@ public:
 	//Проверка корректности маршрута
 	bool check_exceptions(std::vector<int>&);
 	//Добавить точку на карту
-	void add_point(float, float);
+	Point* add_point(float, float);
 	//Добавить соединение между двумя точками
 	void add_connection(int, int);
 

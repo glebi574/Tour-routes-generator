@@ -10,6 +10,7 @@ int input_field_id = 0;
 
 bool edit_mode = 0;
 bool input_mode = 0;
+bool name_visibility_mode = 0;
 
 bool interface_mode = 0;
 
@@ -24,34 +25,39 @@ void interface_input_callback(Window& window, Interface& interface, Population& 
 	if (input_mode) {
 		if (event.key.code == Keyboard::Return) { //Нажатие клавиши ввода
 			input_mode = false;
-			if (interface.temp_string.size() == 0)
-				interface.temp_string = "0";
-			try {
-				if (interface.input_fields[input_field_id].type) //Изменение значения, на которое указывает ptr, на введённое
-					*(float*)interface.input_fields[input_field_id].ptr = std::stof(std::string(interface.temp_string));
-				else
-					*(int*)interface.input_fields[input_field_id].ptr = std::stoi(std::string(interface.temp_string));
-			}
-			catch(std::invalid_argument& q) {
-				interface.temp_string = "0";
-				if (interface.input_fields[input_field_id].type)
-					*(float*)interface.input_fields[input_field_id].ptr = std::stof(std::string(interface.temp_string));
-				else
-					*(int*)interface.input_fields[input_field_id].ptr = std::stoi(std::string(interface.temp_string));
+			if (interface.input_fields[input_field_id].is_str) {
+				*(std::wstring*)interface.input_fields[input_field_id].ptr = interface.temp_string;
+			} else {
+				if (interface.temp_string.size() == 0)
+					interface.temp_string = L"0";
+				try {
+					if (interface.input_fields[input_field_id].type) //Изменение значения, на которое указывает ptr, на введённое
+						*(float*)interface.input_fields[input_field_id].ptr = std::stof(std::wstring(interface.temp_string));
+					else
+						*(int*)interface.input_fields[input_field_id].ptr = std::stoi(std::wstring(interface.temp_string));
+				}
+				catch (std::invalid_argument& q) {
+					interface.temp_string = L"0";
+					if (interface.input_fields[input_field_id].type)
+						*(float*)interface.input_fields[input_field_id].ptr = std::stof(std::wstring(interface.temp_string));
+					else
+						*(int*)interface.input_fields[input_field_id].ptr = std::stoi(std::wstring(interface.temp_string));
+				}
 			}
 			interface.input_fields[input_field_id].rectangle.setFillColor(Color::Transparent);
-			interface.temp_string = "";
+			interface.temp_string = L"";
 			interface.temp_text.setString("");
 			if (f.map.size() == 0) //Обновление параметров пункта, если возможно
 				return;
-			f.map[point_id].time = selected_point.time;
-			f.map[point_id].price = selected_point.price;
-			f.map[point_id].score = selected_point.score;
+			f.map[point_id]->name = selected_point.name;
+			f.map[point_id]->time = selected_point.time;
+			f.map[point_id]->price = selected_point.price;
+			f.map[point_id]->score = selected_point.score;
 			if (f.connections.size() == 0) //Обновление параметров пути, если возможно
 				return;
-			f.map[f.connections[connection_id].id[0]].connections[f.connections[connection_id].id[1]]
+			f.map[f.connections[connection_id].id[0]]->connections[f.connections[connection_id].id[1]]
 				= selected_connection.time;
-			f.map[f.connections[connection_id].id[1]].connections[f.connections[connection_id].id[0]]
+			f.map[f.connections[connection_id].id[1]]->connections[f.connections[connection_id].id[0]]
 				= selected_connection.time;
 			return;
 		}
@@ -70,35 +76,90 @@ void interface_input_callback(Window& window, Interface& interface, Population& 
 	}
 	if (event.type != Event::MouseButtonReleased || input_mode)
 		return;
-	//Работа с картой
+}
+
+void main_interface_input_callback(Window& window, Interface interface, Population& f, Event& event) {
+
+}
+
+void results_interface_input_callback(Window& window, Interface& interface, Population& f, Event& event) {
+	if (input_mode) {
+		if (event.key.code == Keyboard::Return) { //Нажатие клавиши ввода
+			input_mode = false;
+			if (interface.temp_string.size() == 0)
+				interface.temp_string = L"0";
+			try {
+				if (interface.input_fields[input_field_id].type) //Изменение значения, на которое указывает ptr, на введённое
+					*(float*)interface.input_fields[input_field_id].ptr = std::stof(std::wstring(interface.temp_string));
+				else
+					*(int*)interface.input_fields[input_field_id].ptr = std::stoi(std::wstring(interface.temp_string));
+			}
+			catch (std::invalid_argument& q) {
+				interface.temp_string = L"0";
+				if (interface.input_fields[input_field_id].type)
+					*(float*)interface.input_fields[input_field_id].ptr = std::stof(std::wstring(interface.temp_string));
+				else
+					*(int*)interface.input_fields[input_field_id].ptr = std::stoi(std::wstring(interface.temp_string));
+			}
+			interface.input_fields[input_field_id].rectangle.setFillColor(Color::Transparent);
+			interface.temp_string = L"";
+			interface.temp_text.setString("");
+			if (selected_route >= f.results.amount) {
+				selected_route = 0;
+				return;
+			}
+			selected_result = f.results.best_routes[results_mode][selected_route];
+			return;
+		}
+		if (event.key.code == Keyboard::BackSpace) { //Нажатие backspase
+			if (interface.temp_string.size() != 0) //Удаление 1 введённого символа, если возможно
+				interface.temp_string.pop_back();
+			interface.temp_text.setString(interface.temp_string);
+			return;
+		}
+		if (event.type == Event::TextEntered) //Ввод остальных символов с клавиатуры
+		{
+			interface.temp_string += event.text.unicode; //Увеличение строки на введённый символ
+			interface.temp_text.setString(interface.temp_string); //Обновление отображаемого текста
+			return;
+		}
+	}
+}
+
+void map_interface_callback(Window& window, Interface& interface, Population& f, Event& event) {
 	if (event.mouseButton.x < 1000) { //Проверка позиции
 		if (event.mouseButton.button == Mouse::Right) { //Выделить точку при нажатии ПКМ
 			for (int i = 0; i < f.map.size(); ++i) {
-				if (!interface.if_mouse_in_point(event, f.map[i].obj, f))
+				if (!interface.if_mouse_in_point(event, f.map[i]->obj, f))
 					continue;
-				f.map[point_id].obj.setFillColor(Color::Red);
-				f.map[i].obj.setFillColor(IColor::Blue);
+				f.map[point_id]->obj.setFillColor(Color::Red);
+				f.map[i]->obj.setFillColor(IColor::Blue);
 				point_id = i;
-				selected_point = f.map[i];
+				selected_point = *f.map[i];
 				return;
 			}
 			return;
 		}
 		if (!edit_mode && event.mouseButton.button == Mouse::Left) { //Создать точку при нажатии ЛКМ в 1 режиме, если возможно
 			for (auto& g : f.map) {
-				Vector2f pos = g.obj.getPosition();
+				Vector2f pos = g->obj.getPosition();
 				float dx = event.mouseButton.x - pos.x - f.point_radius;
 				float dy = event.mouseButton.y - pos.y - f.point_radius;
 				if (sqrt(dx * dx + dy * dy) < (2.f * f.point_radius + 4.f))
 					return;
 			}
-			f.add_point(event.mouseButton.x - f.point_radius, event.mouseButton.y - f.point_radius);
+			Population::Point* point = f.add_point(event.mouseButton.x - f.point_radius, event.mouseButton.y - f.point_radius);
+			auto& vect = point->obj.getPosition();
+			interface.add_pointer_string(&(point->name), 0, 14, vect.x + 3.f * f.point_radius, vect.y + 3.f, true);
+			interface.string_pointers[interface.string_pointers.size() - 1].text.setFillColor(Color::White);
+			interface.string_pointers[interface.string_pointers.size() - 1].text.setOutlineColor(Color::Black);
+			interface.string_pointers[interface.string_pointers.size() - 1].text.setOutlineThickness(1.3f);
 			return;
 		}
 		switch (event.mouseButton.button) { //Режим редактирования путей
 		case Mouse::Left: //Провести путь от выделенной точки к данной, если возможно
 			for (int i = 0; i < f.map.size(); ++i) {
-				if ((!interface.if_mouse_in_point(event, f.map[i].obj, f)) || (i == point_id))
+				if ((!interface.if_mouse_in_point(event, f.map[i]->obj, f)) || (i == point_id))
 					continue;
 				for (auto& m : f.connections)
 					if ((m.id[0] == i && m.id[1] == point_id) || (m.id[0] == point_id && m.id[1] == i))
@@ -131,54 +192,6 @@ void interface_input_callback(Window& window, Interface& interface, Population& 
 	}
 }
 
-void main_interface_input_callback(Window& window, Interface interface, Population& f, Event& event) {
-
-}
-
-void results_interface_input_callback(Window& window, Interface& interface, Population& f, Event& event) {
-	if (input_mode) {
-		if (event.key.code == Keyboard::Return) { //Нажатие клавиши ввода
-			input_mode = false;
-			if (interface.temp_string.size() == 0)
-				interface.temp_string = "0";
-			try {
-				if (interface.input_fields[input_field_id].type) //Изменение значения, на которое указывает ptr, на введённое
-					*(float*)interface.input_fields[input_field_id].ptr = std::stof(std::string(interface.temp_string));
-				else
-					*(int*)interface.input_fields[input_field_id].ptr = std::stoi(std::string(interface.temp_string));
-			}
-			catch (std::invalid_argument& q) {
-				interface.temp_string = "0";
-				if (interface.input_fields[input_field_id].type)
-					*(float*)interface.input_fields[input_field_id].ptr = std::stof(std::string(interface.temp_string));
-				else
-					*(int*)interface.input_fields[input_field_id].ptr = std::stoi(std::string(interface.temp_string));
-			}
-			interface.input_fields[input_field_id].rectangle.setFillColor(Color::Transparent);
-			interface.temp_string = "";
-			interface.temp_text.setString("");
-			if (selected_route >= f.results.amount) {
-				selected_route = 0;
-				return;
-			}
-			selected_result = f.results.best_routes[results_mode][selected_route];
-			return;
-		}
-		if (event.key.code == Keyboard::BackSpace) { //Нажатие backspase
-			if (interface.temp_string.size() != 0) //Удаление 1 введённого символа, если возможно
-				interface.temp_string.pop_back();
-			interface.temp_text.setString(interface.temp_string);
-			return;
-		}
-		if (event.type == Event::TextEntered) //Ввод остальных символов с клавиатуры
-		{
-			interface.temp_string += event.text.unicode; //Увеличение строки на введённый символ
-			interface.temp_text.setString(interface.temp_string); //Обновление отображаемого текста
-			return;
-		}
-	}
-}
-
 int main() {
 
 	srand(clock()); //начальное значение rand()
@@ -190,6 +203,7 @@ int main() {
 	Interface interface("FiraCode-Regular.ttf");
 	Interface main_interface("FiraCode-Regular.ttf");
 	Interface results_interface("FiraCode-Regular.ttf");
+	Interface map_interface("FiraCode-Regular.ttf");
 	map.loadFromFile("map.png");
 	Sprite map_sprite(map);
 
@@ -203,58 +217,62 @@ int main() {
 	interface.add_string(L"Режим редактора:", 18, x, y - 80);
 
 	interface.add_string(L"Параметры пункта", 24, x, y - 40);
-	interface.add_string(L"Пункт:", 16, x, y);
-	interface.add_string(L"Время посещения:", 16, x, y + 20);
-	interface.add_string(L"Стоимость посещения:", 16, x, y + 40);
-	interface.add_string(L"Оценка:", 16, x, y + 60);
+	interface.add_string(L"Номер:", 16, x, y);
+	interface.add_string(L"Название:", 16, x, y + 20);
+	interface.add_string(L"Время посещения:", 16, x, y + 40);
+	interface.add_string(L"Стоимость посещения:", 16, x, y + 60);
+	interface.add_string(L"Оценка:", 16, x, y + 80);
 
-	interface.add_string(L"Начальный пункт:", 16, x, y + 100);
-	interface.add_string(L"Конечный пункт:", 16, x, y + 120);
+	interface.add_string(L"Начальный пункт:", 16, x, y + 120);
+	interface.add_string(L"Конечный пункт:", 16, x, y + 140);
 
-	interface.add_string(L"Параметры пути", 24, x, y + 160);
-	interface.add_string(L"Время пути:", 16, x, y + 200);
+	interface.add_string(L"Параметры пути", 24, x, y + 180);
+	interface.add_string(L"Время пути:", 16, x, y + 220);
 
-	interface.add_string(L"Важность параметров", 24, x, y + 240);
-	interface.add_string(L"Важность времени:", 16, x, y + 280);
-	interface.add_string(L"Важность стоимости:", 16, x, y + 300);
-	interface.add_string(L"Важность оценки:", 16, x, y + 320);
+	interface.add_string(L"Важность параметров", 24, x, y + 260);
+	interface.add_string(L"Важность времени:", 16, x, y + 300);
+	interface.add_string(L"Важность стоимости:", 16, x, y + 320);
+	interface.add_string(L"Важность оценки:", 16, x, y + 340);
 
-	interface.add_string(L"Алгоритм", 24, x, y + 360);
-	interface.add_string(L"Количество особей:", 16, x, y + 400);
-	interface.add_string(L"Количество генераций:", 16, x, y + 420);
+	interface.add_string(L"Алгоритм", 24, x, y + 380);
+	interface.add_string(L"Количество особей:", 16, x, y + 420);
+	interface.add_string(L"Количество генераций:", 16, x, y + 440);
 
 	interface.add_pointer_string(&point_id, 0, 16, x + 220, y);
 
-	interface.add_input_field(&selected_point.time, 1, 16, x + 220, y + 20, x + 300, y + 40);
-	interface.add_input_field(&selected_point.price, 1, 16, x + 220, y + 40, x + 300, y + 60);
-	interface.add_input_field(&selected_point.score, 1, 16, x + 220, y + 60, x + 300, y + 80);
+	interface.add_input_field(&selected_point.name, 1, 14, x + 120, y + 22, x + 300, y + 38, true);
+	interface.add_input_field(&selected_point.time, 1, 16, x + 220, y + 40, x + 300, y + 60);
+	interface.add_input_field(&selected_point.price, 1, 16, x + 220, y + 60, x + 300, y + 80);
+	interface.add_input_field(&selected_point.score, 1, 16, x + 220, y + 80, x + 300, y + 100);
 
-	interface.add_input_field(&g.route_parametres.first_point, 0, 16, x + 220, y + 100, x + 300, y + 120);
-	interface.add_input_field(&g.route_parametres.last_point, 0, 16, x + 220, y + 120, x + 300, y + 140);
+	interface.add_input_field(&g.route_parametres.first_point, 0, 16, x + 220, y + 120, x + 300, y + 140);
+	interface.add_input_field(&g.route_parametres.last_point, 0, 16, x + 220, y + 140, x + 300, y + 160);
 
-	interface.add_input_field(&selected_connection.time, 1, 16, x + 220, y + 200, x + 300, y + 220);
+	interface.add_input_field(&selected_connection.time, 1, 16, x + 220, y + 220, x + 300, y + 240);
 
-	interface.add_input_field(&g.user_ratios.time, 0, 16, x + 220, y + 280, x + 300, y + 300);
-	interface.add_input_field(&g.user_ratios.price, 0, 16, x + 220, y + 300, x + 300, y + 320);
-	interface.add_input_field(&g.user_ratios.score, 0, 16, x + 220, y + 320, x + 300, y + 340);
+	interface.add_input_field(&g.user_ratios.time, 0, 16, x + 220, y + 300, x + 300, y + 320);
+	interface.add_input_field(&g.user_ratios.price, 0, 16, x + 220, y + 320, x + 300, y + 340);
+	interface.add_input_field(&g.user_ratios.score, 0, 16, x + 220, y + 340, x + 300, y + 360);
 
-	interface.add_input_field(&g.amount, 0, 16, x + 220, y + 400, x + 300, y + 420);
-	interface.add_input_field(&g.cycles_amount, 0, 16, x + 220, y + 420, x + 300, y + 440);
+	interface.add_input_field(&g.amount, 0, 16, x + 220, y + 420, x + 300, y + 440);
+	interface.add_input_field(&g.cycles_amount, 0, 16, x + 220, y + 440, x + 300, y + 460);
 
-	interface.add_window_rectangle(0.5, x - 5, y - 45, x + 305, y + 145);
-	interface.add_window_rectangle(0.5, x - 5, y + 155, x + 305, y + 225);
-	interface.add_window_rectangle(0.5, x - 5, y + 235, x + 305, y + 345);
-	interface.add_window_rectangle(0.5, x - 5, y + 355, x + 305, y + 445);
+	interface.add_window_rectangle(0.5, x - 5, y - 45, x + 305, y + 165);
+	interface.add_window_rectangle(0.5, x - 5, y + 175, x + 305, y + 245);
+	interface.add_window_rectangle(0.5, x - 5, y + 255, x + 305, y + 365);
+	interface.add_window_rectangle(0.5, x - 5, y + 375, x + 305, y + 465);
 
-	Interface::Button& algorithm_button = interface.add_button(L"Сгенерировать", 16, x - 5, y + 460, x + 170, y + 480);
-	Interface::Switch& edit_switch = interface.add_switch({ {x + 255, y - 80, x + 275, y - 60}, {x + 285, y - 80, x + 305, y - 60} });
+	Interface::Button* algorithm_button = interface.add_button(L"Сгенерировать", 16, x - 5, y + 480, x + 170, y + 500);
+	Interface::Switch* edit_switch = interface.add_switch({ {x + 255, y - 80, x + 275, y - 60}, {x + 285, y - 80, x + 305, y - 60} });
 
 	RectangleShape interface_bg(Vector2f(800.f, 800.f));
 	interface_bg.move(1000.f, 0.f);
 
+	main_interface.add_string(L"Отображение названий:", 18, x, y + 605);
 	main_interface.add_string(L"Режим интерфейса:", 18, x, y + 630);
-	Interface::Switch& interface_switch = main_interface.add_switch({ {x + 255, y + 630, x + 275, y + 650}, {x + 285, y + 630, x + 305, y + 650} });
-
+	Interface::Switch* name_visibility_switch = main_interface.add_switch({ {x + 255, y + 605, x + 275, y + 625}, {x + 285, y + 605, x + 305, y + 625} });
+	Interface::Switch* interface_switch = main_interface.add_switch({ {x + 255, y + 630, x + 275, y + 650}, {x + 285, y + 630, x + 305, y + 650} });
+	
 	results_interface.add_string(L"Уникальные маршруты:", 18, x, y - 80);
 	results_interface.add_string(L"Выбранный маршрут:", 18, x, y - 60);
 
@@ -281,7 +299,7 @@ int main() {
 	results_interface.add_window_rectangle(0.5, x - 5, y - 35, x + 305, y + 115);
 	results_interface.add_window_rectangle(0.5, x - 5, y + 125, x + 305, y + 260);
 
-	Interface::Switch& results_switch = results_interface.add_switch({
+	Interface::Switch* results_switch = results_interface.add_switch({
 			{x + 275, y + 10, x + 295, y + 30},
 			{x + 275, y + 35, x + 295, y + 55},
 			{x + 275, y + 60, x + 295, y + 80},
@@ -296,10 +314,10 @@ int main() {
 			main_interface_input_callback(window, main_interface, g, event);
 			if (interface_mode) {
 				if (event.type == Event::MouseButtonReleased && !input_mode) {
-					for (int i = 0; i < results_switch.rectangles.size(); ++i) { //Проверка переключения переключателя
-						if (results_interface.if_mouse_in_rectangle(event, results_switch.rectangles[i])) {
+					for (int i = 0; i < results_switch->rectangles.size(); ++i) { //Проверка переключения переключателя
+						if (results_interface.if_mouse_in_rectangle(event, results_switch->rectangles[i])) {
 							results_interface.change_switch_selection(results_switch, i);
-							results_mode = results_switch.mode;
+							results_mode = results_switch->mode;
 							selected_result = g.results.best_routes[results_mode][selected_route];
 							break;
 						}
@@ -317,16 +335,16 @@ int main() {
 			}
 			else {
 				if (event.type == Event::MouseButtonReleased && !input_mode) {
-					for (int i = 0; i < edit_switch.rectangles.size(); ++i) { //Проверка переключения переключателя
-						if (interface.if_mouse_in_rectangle(event, edit_switch.rectangles[i])) {
+					for (int i = 0; i < edit_switch->rectangles.size(); ++i) { //Проверка переключения переключателя
+						if (interface.if_mouse_in_rectangle(event, edit_switch->rectangles[i])) {
 							interface.change_switch_selection(edit_switch, i);
-							edit_mode = edit_switch.mode;
+							edit_mode = edit_switch->mode;
 							for (auto& u : g.connections)
 								u.rectangle.setFillColor(IColor::Gray);
 							break;
 						}
 					}
-					if (interface.if_mouse_in_rectangle(event, algorithm_button.rectangle)) { //Проверка нажатия кнопки
+					if (interface.if_mouse_in_rectangle(event, algorithm_button->rectangle)) { //Проверка нажатия кнопки
 						g.generate_routes();
 						g.results.reset();
 						for (int i = 0; i < g.cycles_amount; ++i) {
@@ -352,20 +370,29 @@ int main() {
 							input_field_id = i;
 							interface.temp_text.setPosition(interface.input_fields[i].rectangle.getPosition());
 							interface.input_fields[i].rectangle.setFillColor(Color::White);
+							break;
 						}
 					}
+					map_interface_callback(window, map_interface, g, event);
 				}
 				interface_input_callback(window, interface, g, event);
 			}
 			if (event.type == Event::MouseButtonReleased && !input_mode) {
-				for (int i = 0; i < interface_switch.rectangles.size(); ++i) { //Проверка переключения переключателя
-					if (main_interface.if_mouse_in_rectangle(event, interface_switch.rectangles[i])) {
+				for (int i = 0; i < interface_switch->rectangles.size(); ++i) { //Проверка переключения переключателя
+					if (main_interface.if_mouse_in_rectangle(event, interface_switch->rectangles[i])) {
 						main_interface.change_switch_selection(interface_switch, i);
-						interface_mode = interface_switch.mode;
+						interface_mode = interface_switch->mode;
 						for (auto& u : g.map)
-							u.obj.setFillColor(Color::Red);
+							u->obj.setFillColor(Color::Red);
 						for (auto& u : g.connections)
 							u.rectangle.setFillColor(IColor::Gray);
+						break;
+					}
+				}
+				for (int i = 0; i < name_visibility_switch->rectangles.size(); ++i) { //Проверка переключения переключателя
+					if (main_interface.if_mouse_in_rectangle(event, name_visibility_switch->rectangles[i])) {
+						main_interface.change_switch_selection(name_visibility_switch, i);
+						name_visibility_mode = name_visibility_switch->mode;
 						break;
 					}
 				}
@@ -382,10 +409,10 @@ int main() {
 		if (interface_mode) {
 			results_interface.draw(window);
 			for (auto& u : g.map)
-				window.draw(u.obj);
+				window.draw(u->obj);
 			std::vector<std::vector<int>> connected;
 			for (int i = 1; i < selected_result.path.size(); ++i) {
-				std::vector<int> k1 = { selected_result.path[i - 1], selected_result.path[i]};
+				std::vector<int> k1 = { selected_result.path[i - 1], selected_result.path[i] };
 				std::vector<int> k2 = { selected_result.path[i], selected_result.path[i - 1] };
 				for (auto& u : connected) {
 					if (u == k1 || u == k2)
@@ -404,6 +431,10 @@ int main() {
 		else {
 			interface.draw(window);
 			g.draw(window);
+		}
+
+		if (name_visibility_mode) {
+			map_interface.draw(window);
 		}
 
 		window.display();

@@ -1,8 +1,4 @@
-﻿#pragma once
-
-#include <cassert>
-#include "Functions.h"
-#include "Algorithm.h"
+﻿#include "Algorithm.h"
 
 void Population::generate_routes() {
 	generation.clear();
@@ -284,3 +280,172 @@ void Population::draw(RenderWindow& window) {
 	for (auto& g : connections)
 		window.draw(g.rectangle);
 }
+
+void Population::save(std::wstring file_name) {
+	std::wofstream file(L"saves/" + file_name + L".lua");
+	if (file.is_open()) {
+		std::locale loc(std::locale::classic(), new std::codecvt_utf8<wchar_t>());
+		file.imbue(loc);
+		file << "first_point = " << route_parametres.first_point <<
+			"\nlast_point = " << route_parametres.last_point <<
+			"\namount = " << amount <<
+			"\ncycles_amount = " << cycles_amount <<
+			"\ntime_ratio = " << user_ratios.time <<
+			"\nprice_ratio = " << user_ratios.price <<
+			"\nscore_ratio = " << user_ratios.score;
+		file << "\n\nmap = {\n";
+		for (auto& g : map) {
+			file << "\t{\n\t\ttime = " << g->time << ",\n\t\tprice = " << g->price << ",\n\t\tscore = " << g->score <<
+				",\n\t\tname = \"" << g->name << "\",\n\t\tx = " << g->obj.getPosition().x << ",\n\t\ty = " << g->obj.getPosition().y <<
+				",\n\t\tconnections = { ";
+			for (auto& t : g->connections) {
+				file << t << ", ";
+			}
+			file << "}\n\t},\n";
+		}
+		file << "}\n\nconnections = {\n";
+		for (auto& g : connections) {
+			file << "\t{ id1 = " << g.id[0] << ", id2 = " << g.id[1] << ", time = " << g.time << " },\n";
+		}
+		file << "}";
+		file.close();
+		std::cout << "Успешно сохранено.\n";
+	}
+	else {
+		std::cout << "Ошибка при открытии файла.\n";
+	}
+}
+
+void Population::load(std::wstring file_name) {
+	for (auto& g : map) {
+		delete g;
+	}
+	map.clear();
+	connections.clear();
+	generation.clear();
+	best_results.clear();
+	results.routes.clear();
+	results.amount = 0;
+	route_parametres.first_point = 0;
+	route_parametres.last_point = 1;
+	user_ratios.time = 1;
+	user_ratios.price = 1;
+	user_ratios.score = 1;
+	points = 0;
+	attempt = 1;
+	amount = 20;
+	cycles_amount = 10;
+
+	lua_State* L = luaL_newstate();
+	luaL_openlibs(L);
+	std::wstring wpath = "saves/" + file_name + L".lua";
+	if (luaL_dofile(L, std::string(wpath.begin(), wpath.end()).c_str()) != LUA_OK) {
+		const char* error_message = lua_tostring(L, -1);
+		std::cerr << "Ошибка: " << error_message << std::endl;
+		lua_pop(L, 1);
+		lua_close(L);
+		return;
+	}
+	
+	lua_getglobal(L, "first_point");
+	lua_getglobal(L, "last_point");
+	lua_getglobal(L, "amount");
+	lua_getglobal(L, "cycles_amount");
+	lua_getglobal(L, "time_ratio");
+	lua_getglobal(L, "price_ratio");
+	lua_getglobal(L, "score_ratio");
+
+	route_parametres.first_point = lua_tointeger(L, -7);
+	route_parametres.last_point = lua_tointeger(L, -6);
+	amount = lua_tointeger(L, -5);
+	cycles_amount = lua_tointeger(L, -4);
+	user_ratios.time = lua_tointeger(L, -3);
+	user_ratios.price = lua_tointeger(L, -2);
+	user_ratios.score = lua_tointeger(L, -1);
+
+	lua_pop(L, 7);
+
+	lua_getglobal(L, "map");
+	if (!lua_istable(L, -1)) {
+		lua_close(L);
+		return;
+	}
+	
+	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter16;
+
+	int n = luaL_len(L, -1);
+	for (int i = 1; i <= n; ++i) {
+		lua_rawgeti(L, -1, i);
+		if (lua_istable(L, -1)) {
+			lua_getfield(L, -1, "time");
+			lua_getfield(L, -2, "price");
+			lua_getfield(L, -3, "score");
+			lua_getfield(L, -4, "name");
+			lua_getfield(L, -5, "x");
+			lua_getfield(L, -6, "y");
+
+			int x = lua_tointeger(L, -2), y = lua_tointeger(L, -1);
+			Point* p = add_point(x, y);
+			p->time = lua_tonumber(L, -6);
+			p->price = lua_tonumber(L, -5);
+			p->score = lua_tonumber(L, -4);
+			p->name = converter16.from_bytes(lua_tostring(L, -3));
+			lua_pop(L, 6);
+		}
+		lua_pop(L, 1);
+	}
+	/*
+	for (int i = 1; i <= n; ++i) {
+		lua_rawgeti(L, -1, i);
+		if (lua_istable(L, -1)) {
+			lua_getfield(L, -1, "connections");
+			if (lua_istable(L, -1)) {
+				int q = luaL_len(L, -1);
+				for (int r = 1; r <= q; ++r) {
+					lua_rawgeti(L, -1, r);
+					map[i - 1]->connections[r - 1] = lua_tonumber(L, -1);
+					lua_pop(L, 1);
+				}
+			}
+			lua_pop(L, 1);
+		}
+		lua_pop(L, 1);
+	}
+	*/
+	lua_pop(L, 1);
+
+	lua_getglobal(L, "connections");
+	if (!lua_istable(L, -1)) {
+		lua_close(L);
+		return;
+	}
+
+	n = luaL_len(L, -1);
+	for (int i = 1; i <= n; ++i) {
+		lua_rawgeti(L, -1, i);
+		if (lua_istable(L, -1)) {
+			lua_getfield(L, -1, "id1");
+			lua_getfield(L, -2, "id2");
+			lua_getfield(L, -3, "time");
+
+			int id1 = lua_tointeger(L, -3), id2 = lua_tointeger(L, -2);
+			float time = lua_tonumber(L, -1);
+			lua_pop(L, 3);
+			add_connection(id1, id2);
+			connections[connections.size() - 1].time = time;
+			map[id1]->connections[id2] = time;
+			map[id2]->connections[id1] = time;
+		}
+		lua_pop(L, 1);
+	}
+
+	lua_pop(L, 1);
+	lua_close(L);
+}
+/*
+Population::~Population() {
+	for (auto& g : map) {
+		delete g;
+	}
+}
+*/

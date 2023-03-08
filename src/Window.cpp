@@ -1,6 +1,4 @@
-﻿#pragma once
-
-#include "Window.h"
+﻿#include "Window.h"
 
 Interface::Interface(std::string str) {
 	font.loadFromFile(str);

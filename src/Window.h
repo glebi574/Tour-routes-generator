@@ -1,8 +1,6 @@
 ﻿#pragma once
 
 #include "Algorithm.h"
-#include <sstream>
-#include <iomanip>
 
 class Interface {
 public:

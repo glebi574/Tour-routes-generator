@@ -1,10 +1,6 @@
 ﻿#pragma once
 
-#include <iostream>
-#include <vector>
-#include <SFML/Graphics.hpp>
-#include <SFML/System.hpp>
-#include <SFML/Window.hpp>
+#include "Functions.h"
 using namespace sf;
 
 namespace IColor { //Дополнительные цвета
@@ -106,6 +102,12 @@ public:
 	Point* add_point(float, float);
 	//Добавить соединение между двумя точками
 	void add_connection(int, int);
+
+	void save(std::wstring);
+
+	void load(std::wstring);
+
+	//~Population();
 
 	friend class Interface;
 };

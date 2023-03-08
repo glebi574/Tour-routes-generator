@@ -21,6 +21,8 @@ Population::Point selected_point;
 Population::Connection selected_connection;
 Population::Route selected_result;
 
+std::wstring file_name;
+
 void interface_input_callback(Window& window, Interface& interface, Population& f, Event& event) {
 	if (input_mode) {
 		if (event.key.code == Keyboard::Return) { //Нажатие клавиши ввода
@@ -74,8 +76,6 @@ void interface_input_callback(Window& window, Interface& interface, Population& 
 			return;
 		}
 	}
-	if (event.type != Event::MouseButtonReleased || input_mode)
-		return;
 }
 
 void main_interface_input_callback(Window& window, Interface interface, Population& f, Event& event) {
@@ -265,6 +265,11 @@ int main() {
 	Interface::Button* algorithm_button = interface.add_button(L"Сгенерировать", 16, x - 5, y + 480, x + 170, y + 500);
 	Interface::Switch* edit_switch = interface.add_switch({ {x + 255, y - 80, x + 275, y - 60}, {x + 285, y - 80, x + 305, y - 60} });
 
+	interface.add_string(L"Файл:", 16, x, y + 540);
+	interface.add_input_field(&file_name, 1, 14, x + 120, y + 540, x + 300, y + 560, true);
+	Interface::Button* save_button = interface.add_button(L"Сохранить", 16, x - 5, y + 570, x + 145, y + 590);
+	Interface::Button* load_button = interface.add_button(L"Загрузить", 16, x + 150, y + 570, x + 300, y + 590);
+
 	RectangleShape interface_bg(Vector2f(800.f, 800.f));
 	interface_bg.move(1000.f, 0.f);
 
@@ -318,7 +323,8 @@ int main() {
 						if (results_interface.if_mouse_in_rectangle(event, results_switch->rectangles[i])) {
 							results_interface.change_switch_selection(results_switch, i);
 							results_mode = results_switch->mode;
-							selected_result = g.results.best_routes[results_mode][selected_route];
+							if (!g.results.best_routes.empty())
+								selected_result = g.results.best_routes[results_mode][selected_route];
 							break;
 						}
 					}
@@ -344,7 +350,7 @@ int main() {
 							break;
 						}
 					}
-					if (interface.if_mouse_in_rectangle(event, algorithm_button->rectangle)) { //Проверка нажатия кнопки
+					if (interface.if_mouse_in_rectangle(event, algorithm_button->rectangle) && g.map.size() > 4 && g.route_parametres.first_point != g.route_parametres.last_point) { //Проверка нажатия кнопки
 						g.generate_routes();
 						g.results.reset();
 						for (int i = 0; i < g.cycles_amount; ++i) {
@@ -363,6 +369,12 @@ int main() {
 							[](const Population::Route& a, const Population::Route& b) {return a.score > b.score; });
 						std::sort(g.results.best_routes[3].begin(), g.results.best_routes[3].end(),
 							[](const Population::Route& a, const Population::Route& b) {return a.user_result > b.user_result; });
+					}
+					if (interface.if_mouse_in_rectangle(event, save_button->rectangle)) {
+						g.save(file_name);
+					}
+					if (interface.if_mouse_in_rectangle(event, load_button->rectangle)) {
+						g.load(file_name);
 					}
 					for (int i = 0; i < interface.input_fields.size(); ++i) { //Проверка нажатия на поле ввода
 						if (interface.if_mouse_in_rectangle(event, interface.input_fields[i].rectangle)) {

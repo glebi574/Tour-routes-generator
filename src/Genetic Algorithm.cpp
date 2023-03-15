@@ -149,7 +149,7 @@ void map_interface_callback(Window& window, Interface& interface, Population& f,
 					return;
 			}
 			Population::Point* point = f.add_point(event.mouseButton.x - f.point_radius, event.mouseButton.y - f.point_radius);
-			auto& vect = point->obj.getPosition();
+			auto& vect = point->obj.getPosition(); //Добавление текста к точке при её создании вручную -_-
 			interface.add_pointer_string(&(point->name), 0, 14, vect.x + 3.f * f.point_radius, vect.y + 3.f, true);
 			interface.string_pointers[interface.string_pointers.size() - 1].text.setFillColor(Color::White);
 			interface.string_pointers[interface.string_pointers.size() - 1].text.setOutlineColor(Color::Black);
@@ -375,6 +375,14 @@ int main() {
 					}
 					if (interface.if_mouse_in_rectangle(event, load_button->rectangle)) {
 						g.load(file_name);
+						map_interface.string_pointers.clear();
+						for (int i = 0; i < g.map.size(); ++i) {
+							auto& vect = g.map[i]->obj.getPosition();
+							map_interface.add_pointer_string(&(g.map[i]->name), 0, 14, vect.x + 3.f * g.point_radius, vect.y + 3.f, true); //Добавление названий
+							map_interface.string_pointers[i].text.setFillColor(Color::White);
+							map_interface.string_pointers[i].text.setOutlineColor(Color::Black);
+							map_interface.string_pointers[i].text.setOutlineThickness(1.3f);
+						}
 					}
 					for (int i = 0; i < interface.input_fields.size(); ++i) { //Проверка нажатия на поле ввода
 						if (interface.if_mouse_in_rectangle(event, interface.input_fields[i].rectangle)) {

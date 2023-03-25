@@ -200,6 +200,7 @@ int main() {
 
 	Population g;
 	Texture map;
+	Texture* map_ptr = &map;
 	Interface interface("FiraCode-Regular.ttf");
 	Interface main_interface("FiraCode-Regular.ttf");
 	Interface results_interface("FiraCode-Regular.ttf");
@@ -375,6 +376,9 @@ int main() {
 					}
 					if (interface.if_mouse_in_rectangle(event, load_button->rectangle)) {
 						g.load(file_name);
+						map.loadFromFile("saves\\" + file_name + ".png");
+						Sprite __map_sprite(map);
+						map_sprite = __map_sprite;
 						map_interface.string_pointers.clear();
 						for (int i = 0; i < g.map.size(); ++i) {
 							auto& vect = g.map[i]->obj.getPosition();

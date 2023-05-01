@@ -13,7 +13,7 @@ float random(float a, float b) {
 bool chance(int c) {
     return random(0, 100) < c ? true : false;
 }
-
+/*
 sf::Vector2f FixedPosition::getPosition(sf::RectangleShape obj) {
   sf::Vector2f pos = obj.getPosition();
   pos.x *= kx, pos.y *= ky;
@@ -36,3 +36,4 @@ void FixedPosition::count_ratios() {
   sf::Vector2u size = window->getSize();
   kx = size.x / width, ky = size.y / heigth;
 }
+*/

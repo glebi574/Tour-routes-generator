@@ -15,7 +15,7 @@ template<typename T> int find(std::vector<T>& vec, T v) {
             return i;
     return -1;
 }
-
+/*
 class sf::RectangleShape : public FixedPosition { };
 
 class sf::CircleShape : public FixedPosition { };
@@ -35,3 +35,4 @@ public:
 
   sf::Vector2f getPosition(sf::CircleShape);
 };
+*/

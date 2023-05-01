@@ -23,6 +23,40 @@ Population::Route selected_result;
 
 std::wstring file_name;
 
+void input_field_wstring_tonumber(Interface& interface) {
+	if (interface.input_fields[input_field_id].type)
+		*(float*)interface.input_fields[input_field_id].ptr = std::stof(std::wstring(interface.temp_string));
+	else
+		*(int*)interface.input_fields[input_field_id].ptr = std::stoi(std::wstring(interface.temp_string));
+}
+
+void temp_string_to_input_field(Interface& interface) {
+	if (interface.temp_string.size() == 0)
+		interface.temp_string = L"0";
+	try {
+		input_field_wstring_tonumber(interface);
+	}
+	catch (std::invalid_argument& q) {
+		interface.temp_string = L"0";
+		input_field_wstring_tonumber(interface);
+	}
+}
+
+void base_interface_input_handler(Interface& interface, Event& event) {
+	if (event.key.code == Keyboard::BackSpace) { //Нажатие backspase
+		if (interface.temp_string.size() != 0) //Удаление 1 введённого символа, если возможно
+			interface.temp_string.pop_back();
+		interface.temp_text.setString(interface.temp_string);
+		return;
+	}
+	if (event.type == Event::TextEntered) //Ввод остальных символов с клавиатуры
+	{
+		interface.temp_string += event.text.unicode; //Увеличение строки на введённый символ
+		interface.temp_text.setString(interface.temp_string); //Обновление отображаемого текста
+		return;
+	}
+}
+
 void interface_input_callback(Window& window, Interface& interface, Population& f, Event& event) {
 	if (input_mode) {
 		if (event.key.code == Keyboard::Return) { //Нажатие клавиши ввода
@@ -30,21 +64,7 @@ void interface_input_callback(Window& window, Interface& interface, Population& 
 			if (interface.input_fields[input_field_id].is_str) {
 				*(std::wstring*)interface.input_fields[input_field_id].ptr = interface.temp_string;
 			} else {
-				if (interface.temp_string.size() == 0)
-					interface.temp_string = L"0";
-				try {
-					if (interface.input_fields[input_field_id].type) //Изменение значения, на которое указывает ptr, на введённое
-						*(float*)interface.input_fields[input_field_id].ptr = std::stof(std::wstring(interface.temp_string));
-					else
-						*(int*)interface.input_fields[input_field_id].ptr = std::stoi(std::wstring(interface.temp_string));
-				}
-				catch (std::invalid_argument& q) {
-					interface.temp_string = L"0";
-					if (interface.input_fields[input_field_id].type)
-						*(float*)interface.input_fields[input_field_id].ptr = std::stof(std::wstring(interface.temp_string));
-					else
-						*(int*)interface.input_fields[input_field_id].ptr = std::stoi(std::wstring(interface.temp_string));
-				}
+				temp_string_to_input_field(interface);
 			}
 			interface.input_fields[input_field_id].rectangle.setFillColor(Color::Transparent);
 			interface.temp_string = L"";
@@ -63,18 +83,7 @@ void interface_input_callback(Window& window, Interface& interface, Population& 
 				= selected_connection.time;
 			return;
 		}
-		if (event.key.code == Keyboard::BackSpace) { //Нажатие backspase
-			if (interface.temp_string.size() != 0) //Удаление 1 введённого символа, если возможно
-				interface.temp_string.pop_back();
-			interface.temp_text.setString(interface.temp_string);
-			return;
-		}
-		if (event.type == Event::TextEntered) //Ввод остальных символов с клавиатуры
-		{
-			interface.temp_string += event.text.unicode; //Увеличение строки на введённый символ
-			interface.temp_text.setString(interface.temp_string); //Обновление отображаемого текста
-			return;
-		}
+		base_interface_input_handler(interface, event);
 	}
 }
 
@@ -86,21 +95,7 @@ void results_interface_input_callback(Window& window, Interface& interface, Popu
 	if (input_mode) {
 		if (event.key.code == Keyboard::Return) { //Нажатие клавиши ввода
 			input_mode = false;
-			if (interface.temp_string.size() == 0)
-				interface.temp_string = L"0";
-			try {
-				if (interface.input_fields[input_field_id].type) //Изменение значения, на которое указывает ptr, на введённое
-					*(float*)interface.input_fields[input_field_id].ptr = std::stof(std::wstring(interface.temp_string));
-				else
-					*(int*)interface.input_fields[input_field_id].ptr = std::stoi(std::wstring(interface.temp_string));
-			}
-			catch (std::invalid_argument& q) {
-				interface.temp_string = L"0";
-				if (interface.input_fields[input_field_id].type)
-					*(float*)interface.input_fields[input_field_id].ptr = std::stof(std::wstring(interface.temp_string));
-				else
-					*(int*)interface.input_fields[input_field_id].ptr = std::stoi(std::wstring(interface.temp_string));
-			}
+			temp_string_to_input_field(interface);
 			interface.input_fields[input_field_id].rectangle.setFillColor(Color::Transparent);
 			interface.temp_string = L"";
 			interface.temp_text.setString("");
@@ -111,18 +106,7 @@ void results_interface_input_callback(Window& window, Interface& interface, Popu
 			selected_result = f.results.best_routes[results_mode][selected_route];
 			return;
 		}
-		if (event.key.code == Keyboard::BackSpace) { //Нажатие backspase
-			if (interface.temp_string.size() != 0) //Удаление 1 введённого символа, если возможно
-				interface.temp_string.pop_back();
-			interface.temp_text.setString(interface.temp_string);
-			return;
-		}
-		if (event.type == Event::TextEntered) //Ввод остальных символов с клавиатуры
-		{
-			interface.temp_string += event.text.unicode; //Увеличение строки на введённый символ
-			interface.temp_text.setString(interface.temp_string); //Обновление отображаемого текста
-			return;
-		}
+		base_interface_input_handler(interface, event);
 	}
 }
 

@@ -6,16 +6,17 @@
 int point_id = 0;
 int connection_id = 0;
 
+int switch_id = 0; //Номер нового переключателя
 int input_field_id = 0;
 
-bool edit_mode = 0;
-bool input_mode = 0;
+bool edit_mode = 0; //Режим редактирования карты; 0 - точки, 1 - пути
+bool input_mode = 0; //Ввод в поле ввода
 bool name_visibility_mode = 0;
 
-bool interface_mode = 0;
+int interface_mode = 0; //Режим интерфейса; 0 - редактирование данных, 1 - отображение результатов, 2 - настройки
 
-int results_mode = 0;
-int selected_route = 0;
+int results_mode = 0; //Выбранный критерий для отображения результатов
+int selected_route = 0; //Выбранный маршрут в вкладке результатов
 
 Population::Point selected_point;
 Population::Connection selected_connection;
@@ -57,6 +58,38 @@ void base_interface_input_handler(Interface& interface, Event& event) {
 	}
 }
 
+void update_input_field(Interface& interface) {
+	interface.input_fields[input_field_id].rectangle.setFillColor(Color::Transparent);
+	interface.temp_string = L"";
+	interface.temp_text.setString("");
+}
+
+bool can_press_mouse_button(Event& event) {
+	return event.type == Event::MouseButtonReleased && !input_mode;
+}
+
+bool was_switched(Interface::Switch* _switch, Interface& interface, Event& event) {
+	for (int i = 0; i < _switch->rectangles.size(); ++i) {
+		if (interface.if_mouse_in_rectangle(event, _switch->rectangles[i])) {
+			switch_id = i;
+			interface.change_switch_selection(_switch, i);
+			return true;
+		}
+	}
+	return false;
+}
+
+void check_input_fields_activation(Interface& interface, Event& event) {
+	for (int i = 0; i < interface.input_fields.size(); ++i) {
+		if (interface.if_mouse_in_rectangle(event, interface.input_fields[i].rectangle)) {
+			input_mode = true;
+			input_field_id = i;
+			interface.temp_text.setPosition(interface.input_fields[input_field_id].rectangle.getPosition());
+			interface.input_fields[input_field_id].rectangle.setFillColor(Color::White);
+		}
+	}
+}
+
 void interface_input_callback(Window& window, Interface& interface, Population& f, Event& event) {
 	if (input_mode) {
 		if (event.key.code == Keyboard::Return) { //Нажатие клавиши ввода
@@ -66,9 +99,7 @@ void interface_input_callback(Window& window, Interface& interface, Population& 
 			} else {
 				temp_string_to_input_field(interface);
 			}
-			interface.input_fields[input_field_id].rectangle.setFillColor(Color::Transparent);
-			interface.temp_string = L"";
-			interface.temp_text.setString("");
+			update_input_field(interface);
 			if (f.map.size() == 0) //Обновление параметров пункта, если возможно
 				return;
 			f.map[point_id]->name = selected_point.name;
@@ -96,9 +127,7 @@ void results_interface_input_callback(Window& window, Interface& interface, Popu
 		if (event.key.code == Keyboard::Return) { //Нажатие клавиши ввода
 			input_mode = false;
 			temp_string_to_input_field(interface);
-			interface.input_fields[input_field_id].rectangle.setFillColor(Color::Transparent);
-			interface.temp_string = L"";
-			interface.temp_text.setString("");
+			update_input_field(interface);
 			if (selected_route >= f.results.amount) {
 				selected_route = 0;
 				return;
@@ -299,48 +328,21 @@ int main() {
 	while (window.isOpen())
 	{
 		Event event;
-		while (window.pollEvent(event))
-		{
+		while (window.pollEvent(event)) {
 			main_interface_input_callback(window, main_interface, g, event);
-			if (interface_mode) {
-				if (event.type == Event::MouseButtonReleased && !input_mode) {
-					for (int i = 0; i < results_switch->rectangles.size(); ++i) { //Проверка переключения переключателя
-						if (results_interface.if_mouse_in_rectangle(event, results_switch->rectangles[i])) {
-							results_interface.change_switch_selection(results_switch, i);
-							results_mode = results_switch->mode;
-							if (!g.results.best_routes.empty())
-								selected_result = g.results.best_routes[results_mode][selected_route];
-							break;
-						}
+			switch (interface_mode) {
+			case 0:
+				if (can_press_mouse_button(event)) {
+					if (was_switched(edit_switch, interface, event)) {
+						edit_mode = edit_switch->mode;
+						for (auto& u : g.connections)
+							u.rectangle.setFillColor(IColor::Gray);
 					}
-					for (int i = 0; i < results_interface.input_fields.size(); ++i) { //Проверка нажатия на поле ввода
-						if (results_interface.if_mouse_in_rectangle(event, results_interface.input_fields[i].rectangle)) {
-							input_mode = true;
-							input_field_id = i;
-							results_interface.temp_text.setPosition(results_interface.input_fields[i].rectangle.getPosition());
-							results_interface.input_fields[i].rectangle.setFillColor(Color::White);
-						}
-					}
-				}
-				results_interface_input_callback(window, results_interface, g, event);
-			}
-			else {
-				if (event.type == Event::MouseButtonReleased && !input_mode) {
-					for (int i = 0; i < edit_switch->rectangles.size(); ++i) { //Проверка переключения переключателя
-						if (interface.if_mouse_in_rectangle(event, edit_switch->rectangles[i])) {
-							interface.change_switch_selection(edit_switch, i);
-							edit_mode = edit_switch->mode;
-							for (auto& u : g.connections)
-								u.rectangle.setFillColor(IColor::Gray);
-							break;
-						}
-					}
-					if (interface.if_mouse_in_rectangle(event, algorithm_button->rectangle) && g.map.size() > 4 && g.route_parametres.first_point != g.route_parametres.last_point) { //Проверка нажатия кнопки
-						g.generate_routes();
+					if (interface.if_mouse_in_rectangle(event, algorithm_button->rectangle) && g.map.size() > 4 && g.route_parametres.first_point != g.route_parametres.last_point) {
+						g.generate_routes(); //Нажатие кнопки 'Сгенерировать' и проверка невозможности некоторых случаев(проверки возможности создания маршрута нет - а как)
 						g.results.reset();
-						for (int i = 0; i < g.cycles_amount; ++i) {
+						for (int i = 0; i < g.cycles_amount; ++i)
 							g.cycle();
-						}
 						g.results.amount = g.results.routes.size();
 						for (auto& u : g.results.best_routes) {
 							u.resize(g.results.routes.size());
@@ -355,9 +357,8 @@ int main() {
 						std::sort(g.results.best_routes[3].begin(), g.results.best_routes[3].end(),
 							[](const Population::Route& a, const Population::Route& b) {return a.user_result > b.user_result; });
 					}
-					if (interface.if_mouse_in_rectangle(event, save_button->rectangle)) {
+					if (interface.if_mouse_in_rectangle(event, save_button->rectangle))
 						g.save(file_name);
-					}
 					if (interface.if_mouse_in_rectangle(event, load_button->rectangle)) {
 						g.load(file_name);
 						map.loadFromFile("saves\\" + file_name + ".png");
@@ -372,37 +373,36 @@ int main() {
 							map_interface.string_pointers[i].text.setOutlineThickness(1.3f);
 						}
 					}
-					for (int i = 0; i < interface.input_fields.size(); ++i) { //Проверка нажатия на поле ввода
-						if (interface.if_mouse_in_rectangle(event, interface.input_fields[i].rectangle)) {
-							input_mode = true;
-							input_field_id = i;
-							interface.temp_text.setPosition(interface.input_fields[i].rectangle.getPosition());
-							interface.input_fields[i].rectangle.setFillColor(Color::White);
-							break;
-						}
-					}
+					check_input_fields_activation(interface, event);
 					map_interface_callback(window, map_interface, g, event);
 				}
 				interface_input_callback(window, interface, g, event);
-			}
-			if (event.type == Event::MouseButtonReleased && !input_mode) {
-				for (int i = 0; i < interface_switch->rectangles.size(); ++i) { //Проверка переключения переключателя
-					if (main_interface.if_mouse_in_rectangle(event, interface_switch->rectangles[i])) {
-						main_interface.change_switch_selection(interface_switch, i);
-						interface_mode = interface_switch->mode;
-						for (auto& u : g.map)
-							u->obj.setFillColor(Color::Red);
-						for (auto& u : g.connections)
-							u.rectangle.setFillColor(IColor::Gray);
-						break;
+				break;
+			case 1:
+				if (can_press_mouse_button(event)) {
+					if (was_switched(results_switch, results_interface, event)) {
+						results_mode = results_switch->mode;
+						if (!g.results.best_routes.empty())
+							selected_result = g.results.best_routes[results_mode][selected_route];
 					}
+					check_input_fields_activation(results_interface, event);
 				}
-				for (int i = 0; i < name_visibility_switch->rectangles.size(); ++i) { //Проверка переключения переключателя
-					if (main_interface.if_mouse_in_rectangle(event, name_visibility_switch->rectangles[i])) {
-						main_interface.change_switch_selection(name_visibility_switch, i);
-						name_visibility_mode = name_visibility_switch->mode;
-						break;
-					}
+				results_interface_input_callback(window, results_interface, g, event);
+				break;
+			case 2:
+
+				break;
+			}
+			if (can_press_mouse_button(event)) {
+				if (was_switched(interface_switch, main_interface, event)) {
+					interface_mode = interface_switch->mode;
+					for (auto& u : g.map)
+						u->obj.setFillColor(Color::Red);
+					for (auto& u : g.connections)
+						u.rectangle.setFillColor(IColor::Gray);
+				}
+				if (was_switched(name_visibility_switch, main_interface, event)) {
+					name_visibility_mode = name_visibility_switch->mode;
 				}
 			}
 			if (event.type == Event::Closed or event.type == Event::KeyReleased && event.key.code == Keyboard::Escape)

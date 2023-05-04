@@ -12,8 +12,20 @@ namespace IColor { //Дополнительные цвета
 class Population {
 public:
 
-	const float point_radius = 12.f;
-	const float line_width = 5.f;
+	float point_radius = 12.f;
+	float point_outline_thickness = 2.f;
+	float path_width = 5.f;
+	float path_outline_thickness = 2.f;
+
+	Color
+		point_color = Color::Red,
+		point_selection_color = IColor::Blue,
+		point_outline_color = Color::Black,
+		path_color = IColor::Gray,
+		path_selection_color = IColor::Pink,
+		path_outline_color = Color::Black;
+	bool draw_points_first = false;
+	bool do_log = true;
 
 	int points = 0; //количество пунктов
 	int attempt = 1; //номер генерации
@@ -106,6 +118,8 @@ public:
 	void save(std::wstring);
 
 	void load(std::wstring);
+
+	void load_settings();
 
 	//~Population();
 

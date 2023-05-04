@@ -1,5 +1,23 @@
 ﻿#include "Algorithm.h"
 
+Color settings_get_color(lua_State* L, std::string str) {
+	lua_getglobal(L, str.c_str());
+	if (!lua_istable(L, -1)) {
+		return Color::Yellow; //Ошибка
+	}
+	lua_rawgeti(L, -1, 4);
+	lua_rawgeti(L, -2, 3);
+	lua_rawgeti(L, -3, 2);
+	lua_rawgeti(L, -4, 1);
+	Color color = Color(
+		lua_tointeger(L, -1),
+		lua_tointeger(L, -2),
+		lua_tointeger(L, -3),
+		lua_tointeger(L, -4));
+	lua_pop(L, 5);
+	return color;
+}
+
 void Population::generate_routes() {
 	generation.clear();
 	generation.resize(amount);
@@ -150,14 +168,15 @@ void Population::cycle() {
 	if (best[3]->user_result > best_results[3].user_result)
 		best_results[3] = *best[3];
 
-	print_population();
-
-	std::cout << "\n\n\nПуть с наименьшим временем:\n" << best_results[0];
-	if (best_results[1].price != 0)
-		std::cout << "\nПуть с наименьшей стоимостью:\n" << best_results[1];
-	std::cout << "\nПуть с наибольшей привлекательностью:\n" << best_results[2];
-	std::cout << "\nНаиболее подходящий для пользователя путь:\n" << best_results[3];
-	std::cout << "\n\n\n" << std::endl;
+	if (do_log) {
+		print_population();
+		std::cout << "\n\n\nПуть с наименьшим временем:\n" << best_results[0];
+		if (best_results[1].price != 0)
+			std::cout << "\nПуть с наименьшей стоимостью:\n" << best_results[1];
+		std::cout << "\nПуть с наибольшей привлекательностью:\n" << best_results[2];
+		std::cout << "\nНаиболее подходящий для пользователя путь:\n" << best_results[3];
+		std::cout << "\n\n\n" << std::endl;
+	}
 
 	for (auto& g : generation) {
 		bool is_unique = true;
@@ -239,9 +258,9 @@ Population::Point* Population::add_point(float x, float y) {
 		point->connections.emplace_back(0);
 	}
 	point->obj = CircleShape(point_radius);
-	point->obj.setFillColor(Color::Red);
-	point->obj.setOutlineThickness(2.f);
-	point->obj.setOutlineColor(Color::Black);
+	point->obj.setFillColor(point_color);
+	point->obj.setOutlineThickness(point_outline_thickness);
+	point->obj.setOutlineColor(point_outline_color);
 	point->obj.move(x, y);
 	map.push_back(point);
 	for (auto& g : map) {
@@ -264,21 +283,29 @@ void Population::add_connection(int a, int b) {
 	auto& p1 = map[a]->obj.getPosition();
 	auto& p2 = map[b]->obj.getPosition();
 	float l = sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
-	connection.rectangle = RectangleShape(Vector2f(l, line_width));
+	connection.rectangle = RectangleShape(Vector2f(l, path_width));
 	float ang = atan2(p2.y - p1.y, p2.x - p1.x);
-	connection.rectangle.move(p1.x + point_radius - line_width * cos(ang + 1.57f) / 2.f, p1.y + point_radius - line_width * sin(ang + 1.57f) / 2.f);
+	connection.rectangle.move(p1.x + point_radius - path_width * cos(ang + 1.57f) / 2.f, p1.y + point_radius - path_width * sin(ang + 1.57f) / 2.f);
 	connection.rectangle.rotate(180.0f / 3.1416f * ang);
-	connection.rectangle.setFillColor(IColor::Gray);
-	connection.rectangle.setOutlineThickness(2.f);
-	connection.rectangle.setOutlineColor(Color::Black);
+	connection.rectangle.setFillColor(path_color);
+	connection.rectangle.setOutlineThickness(path_outline_thickness);
+	connection.rectangle.setOutlineColor(path_outline_color);
 	connections.emplace_back(connection);
 }
 
 void Population::draw(RenderWindow& window) {
-	for (auto& g : map)
-		window.draw(g->obj);
-	for (auto& g : connections)
-		window.draw(g.rectangle);
+	if (draw_points_first) {
+		for (auto& g : map)
+			window.draw(g->obj);
+		for (auto& g : connections)
+			window.draw(g.rectangle);
+	}
+	else {
+		for (auto& g : connections)
+			window.draw(g.rectangle);
+		for (auto& g : map)
+			window.draw(g->obj);
+	}
 }
 
 void Population::save(std::wstring file_name) {
@@ -394,24 +421,6 @@ void Population::load(std::wstring file_name) {
 		}
 		lua_pop(L, 1);
 	}
-	/*
-	for (int i = 1; i <= n; ++i) {
-		lua_rawgeti(L, -1, i);
-		if (lua_istable(L, -1)) {
-			lua_getfield(L, -1, "connections");
-			if (lua_istable(L, -1)) {
-				int q = luaL_len(L, -1);
-				for (int r = 1; r <= q; ++r) {
-					lua_rawgeti(L, -1, r);
-					map[i - 1]->connections[r - 1] = lua_tonumber(L, -1);
-					lua_pop(L, 1);
-				}
-			}
-			lua_pop(L, 1);
-		}
-		lua_pop(L, 1);
-	}
-	*/
 	lua_pop(L, 1);
 
 	lua_getglobal(L, "connections");
@@ -440,6 +449,44 @@ void Population::load(std::wstring file_name) {
 	}
 
 	lua_pop(L, 1);
+	lua_close(L);
+}
+
+void Population::load_settings() {
+	lua_State* L = luaL_newstate();
+	luaL_openlibs(L);
+	std::wstring wpath = L"settings.lua";
+	if (luaL_dofile(L, std::string(wpath.begin(), wpath.end()).c_str()) != LUA_OK) {
+		const char* error_message = lua_tostring(L, -1);
+		std::cerr << "Ошибка: " << error_message << std::endl;
+		lua_pop(L, 1);
+		lua_close(L);
+		return;
+	}
+
+	lua_getglobal(L, "point_radius");
+	lua_getglobal(L, "point_outline_thickness");
+	lua_getglobal(L, "path_width");
+	lua_getglobal(L, "path_outline_thickness");
+	lua_getglobal(L, "draw_points_first");
+	lua_getglobal(L, "do_log");
+
+	point_radius = lua_tonumber(L, -6);
+	point_outline_thickness = lua_tonumber(L, -5);
+	path_width = lua_tonumber(L, -4);
+	path_outline_thickness = lua_tonumber(L, -3);
+	draw_points_first = lua_tonumber(L, -2);
+	do_log = lua_tonumber(L, -1);
+
+	lua_pop(L, 6);
+	
+	point_color = settings_get_color(L, "point_color");
+	point_selection_color = settings_get_color(L, "point_selection_color");
+	point_outline_color = settings_get_color(L, "point_outline_color");
+	path_color = settings_get_color(L, "path_color");
+	path_selection_color = settings_get_color(L, "path_selection_color");
+	path_outline_color = settings_get_color(L, "path_outline_color");
+	
 	lua_close(L);
 }
 /*

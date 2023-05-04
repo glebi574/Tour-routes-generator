@@ -18,6 +18,8 @@ int interface_mode = 0; //Режим интерфейса; 0 - редактир�
 int results_mode = 0; //Выбранный критерий для отображения результатов
 int selected_route = 0; //Выбранный маршрут в вкладке результатов
 
+Color __gray(219, 239, 219);
+
 Population::Point selected_point;
 Population::Connection selected_connection;
 Population::Route selected_result;
@@ -85,7 +87,7 @@ void check_input_fields_activation(Interface& interface, Event& event) {
 			input_mode = true;
 			input_field_id = i;
 			interface.temp_text.setPosition(interface.input_fields[input_field_id].rectangle.getPosition());
-			interface.input_fields[input_field_id].rectangle.setFillColor(Color::White);
+			interface.input_fields[input_field_id].rectangle.setFillColor(__gray);
 		}
 	}
 }
@@ -139,14 +141,26 @@ void results_interface_input_callback(Window& window, Interface& interface, Popu
 	}
 }
 
+void settings_interface_input_callback(Window& window, Interface& interface, Population& f, Event& event) {
+	if (input_mode) {
+		if (event.key.code == Keyboard::Return) { //Нажатие клавиши ввода
+			input_mode = false;
+			temp_string_to_input_field(interface);
+			update_input_field(interface);
+			return;
+		}
+		base_interface_input_handler(interface, event);
+	}
+}
+
 void map_interface_callback(Window& window, Interface& interface, Population& f, Event& event) {
 	if (event.mouseButton.x < 1000) { //Проверка позиции
 		if (event.mouseButton.button == Mouse::Right) { //Выделить точку при нажатии ПКМ
 			for (int i = 0; i < f.map.size(); ++i) {
 				if (!interface.if_mouse_in_point(event, f.map[i]->obj, f))
 					continue;
-				f.map[point_id]->obj.setFillColor(Color::Red);
-				f.map[i]->obj.setFillColor(IColor::Blue);
+				f.map[point_id]->obj.setFillColor(f.point_color);
+				f.map[i]->obj.setFillColor(f.point_selection_color);
 				point_id = i;
 				selected_point = *f.map[i];
 				return;
@@ -192,9 +206,9 @@ void map_interface_callback(Window& window, Interface& interface, Population& f,
 				pos_m.x = pos_r.x + l * cos(ang);
 				pos_m.y = pos_r.y + l * sin(ang);
 				if (pos_m.x >= pos_r.x && pos_m.y >= pos_r.y && pos_m.x <= pos_r.x + size.x && pos_m.y <= pos_r.y + size.y) {
-					f.connections[connection_id].rectangle.setFillColor(IColor::Gray);
+					f.connections[connection_id].rectangle.setFillColor(f.path_color);
 					f.connections[connection_id].time = selected_connection.time;
-					f.connections[i].rectangle.setFillColor(IColor::Pink);
+					f.connections[i].rectangle.setFillColor(f.path_selection_color);
 					connection_id = i;
 					selected_connection = f.connections[i];
 					return;
@@ -212,12 +226,14 @@ int main() {
 	setlocale(LC_ALL, ""); //использование русского языка
 
 	Population g;
+	g.load_settings();
 	Texture map;
 	Texture* map_ptr = &map;
 	Interface interface("FiraCode-Regular.ttf");
 	Interface main_interface("FiraCode-Regular.ttf");
 	Interface results_interface("FiraCode-Regular.ttf");
 	Interface map_interface("FiraCode-Regular.ttf");
+	Interface settings_interface("FiraCode-Regular.ttf");
 	map.loadFromFile("map.png");
 	Sprite map_sprite(map);
 
@@ -271,9 +287,9 @@ int main() {
 	interface.add_input_field(&g.amount, 0, 16, x + 220, y + 420, x + 300, y + 440);
 	interface.add_input_field(&g.cycles_amount, 0, 16, x + 220, y + 440, x + 300, y + 460);
 
-	interface.add_window_rectangle(0.5, x - 5, y - 45, x + 305, y + 165);
-	interface.add_window_rectangle(0.5, x - 5, y + 175, x + 305, y + 245);
-	interface.add_window_rectangle(0.5, x - 5, y + 255, x + 305, y + 365);
+	interface.add_window_rectangle(0.5, x - 5, y - 45, x + 305, y + 165); //Между линиями - 10
+	interface.add_window_rectangle(0.5, x - 5, y + 175, x + 305, y + 245); //Между первым текстом и линией - 35
+	interface.add_window_rectangle(0.5, x - 5, y + 255, x + 305, y + 365); //Между линией и заголовком - 5
 	interface.add_window_rectangle(0.5, x - 5, y + 375, x + 305, y + 465);
 
 	Interface::Button* algorithm_button = interface.add_button(L"Сгенерировать", 16, x - 5, y + 480, x + 170, y + 500);
@@ -287,16 +303,14 @@ int main() {
 	RectangleShape interface_bg(Vector2f(800.f, 800.f));
 	interface_bg.move(1000.f, 0.f);
 
-	main_interface.add_string(L"Отображение названий:", 18, x, y + 605);
-	main_interface.add_string(L"Режим интерфейса:", 18, x, y + 630);
-	Interface::Switch* name_visibility_switch = main_interface.add_switch({ {x + 255, y + 605, x + 275, y + 625}, {x + 285, y + 605, x + 305, y + 625} });
-	Interface::Switch* interface_switch = main_interface.add_switch({ {x + 255, y + 630, x + 275, y + 650}, {x + 285, y + 630, x + 305, y + 650} });
+	main_interface.add_string(L"Режим интерфейса:", 18, x, y + 630); //Между строкой и переключателем - 0 -> 20
+	Interface::Switch* interface_switch = main_interface.add_switch({ {x + 255, y + 630, x + 275, y + 650}, {x + 285, y + 630, x + 305, y + 650}, {x + 315, y + 630, x + 335, y + 650} });
 	
 	results_interface.add_string(L"Уникальные маршруты:", 18, x, y - 80);
 	results_interface.add_string(L"Выбранный маршрут:", 18, x, y - 60);
 
-	results_interface.add_string(L"Лучшие маршруты", 24, x, y - 30);
-	results_interface.add_string(L"По времени:", 16, x, y + 10);
+	results_interface.add_string(L"Лучшие маршруты", 24, x, y - 30); //Между названием и строкой - 40
+	results_interface.add_string(L"По времени:", 16, x, y + 10); //Между строками - 20 - 25
 	results_interface.add_string(L"По стоимости:", 16, x, y + 35);
 	results_interface.add_string(L"По привлекательности:", 16, x, y + 60);
 	results_interface.add_string(L"По оптимальности:", 16, x, y + 85);
@@ -316,7 +330,7 @@ int main() {
 	results_interface.add_input_field(&selected_route, 0, 18, x + 240, y - 58, x + 305, y - 38);
 
 	results_interface.add_window_rectangle(0.5, x - 5, y - 35, x + 305, y + 115);
-	results_interface.add_window_rectangle(0.5, x - 5, y + 125, x + 305, y + 260);
+	results_interface.add_window_rectangle(0.5, x - 5, y + 125, x + 305, y + 260); //Между строкой и линией - 30
 
 	Interface::Switch* results_switch = results_interface.add_switch({
 			{x + 275, y + 10, x + 295, y + 30},
@@ -324,6 +338,19 @@ int main() {
 			{x + 275, y + 60, x + 295, y + 80},
 			{x + 275, y + 85, x + 295, y + 105}
 		});
+
+	settings_interface.add_string(L"Настройки программы", 24, x, y - 80);
+	settings_interface.add_string(L"Отображение названий:", 16, x, y - 40);
+
+	settings_interface.add_string(L"Настройки алгоритма", 24, x, y + 5);
+	settings_interface.add_string(L"Cкрещивание:", 16, x, y + 45);
+	settings_interface.add_string(L"Шанс мутации:", 16, x, y + 70);
+
+	Interface::Switch* name_visibility_switch = settings_interface.add_switch({ {x + 240, y - 40, x + 260, y - 20}, {x + 270, y - 40, x + 290, y - 20} });
+	Interface::Switch* recombination_switch = settings_interface.add_switch({ {x + 240, y + 45, x + 260, y + 65}, {x + 270, y + 45, x + 290, y + 65} });
+
+	settings_interface.add_window_rectangle(0.5, x - 5, y - 85, x + 305, y - 10);
+	settings_interface.add_window_rectangle(0.5, x - 5, y, x + 305, y + 100);
 
 	while (window.isOpen())
 	{
@@ -336,7 +363,7 @@ int main() {
 					if (was_switched(edit_switch, interface, event)) {
 						edit_mode = edit_switch->mode;
 						for (auto& u : g.connections)
-							u.rectangle.setFillColor(IColor::Gray);
+							u.rectangle.setFillColor(g.path_color);
 					}
 					if (interface.if_mouse_in_rectangle(event, algorithm_button->rectangle) && g.map.size() > 4 && g.route_parametres.first_point != g.route_parametres.last_point) {
 						g.generate_routes(); //Нажатие кнопки 'Сгенерировать' и проверка невозможности некоторых случаев(проверки возможности создания маршрута нет - а как)
@@ -390,19 +417,21 @@ int main() {
 				results_interface_input_callback(window, results_interface, g, event);
 				break;
 			case 2:
-
+				if (can_press_mouse_button(event)) {
+					if (was_switched(name_visibility_switch, settings_interface, event)) {
+						name_visibility_mode = name_visibility_switch->mode;
+					}
+				}
+				settings_interface_input_callback(window, results_interface, g, event);
 				break;
 			}
 			if (can_press_mouse_button(event)) {
 				if (was_switched(interface_switch, main_interface, event)) {
 					interface_mode = interface_switch->mode;
 					for (auto& u : g.map)
-						u->obj.setFillColor(Color::Red);
+						u->obj.setFillColor(g.point_color);
 					for (auto& u : g.connections)
-						u.rectangle.setFillColor(IColor::Gray);
-				}
-				if (was_switched(name_visibility_switch, main_interface, event)) {
-					name_visibility_mode = name_visibility_switch->mode;
+						u.rectangle.setFillColor(g.path_color);
 				}
 			}
 			if (event.type == Event::Closed or event.type == Event::KeyReleased && event.key.code == Keyboard::Escape)
@@ -414,11 +443,16 @@ int main() {
 		window.draw(map_sprite);
 		main_interface.draw(window);
 
-		if (interface_mode) {
+		std::vector<std::vector<int>> connected;
+		switch (interface_mode) {
+		case 0:
+			interface.draw(window);
+			g.draw(window);
+			break;
+		case 1:
 			results_interface.draw(window);
 			for (auto& u : g.map)
 				window.draw(u->obj);
-			std::vector<std::vector<int>> connected;
 			for (int i = 1; i < selected_result.path.size(); ++i) {
 				std::vector<int> k1 = { selected_result.path[i - 1], selected_result.path[i] };
 				std::vector<int> k2 = { selected_result.path[i], selected_result.path[i - 1] };
@@ -435,10 +469,11 @@ int main() {
 					}
 				}
 			}
-		}
-		else {
-			interface.draw(window);
+			break;
+		case 2:
+			settings_interface.draw(window);
 			g.draw(window);
+			break;
 		}
 
 		if (name_visibility_mode) {

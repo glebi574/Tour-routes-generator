@@ -349,6 +349,8 @@ int main() {
 	Interface::Switch* name_visibility_switch = settings_interface.add_switch({ {x + 240, y - 40, x + 260, y - 20}, {x + 270, y - 40, x + 290, y - 20} });
 	Interface::Switch* recombination_switch = settings_interface.add_switch({ {x + 240, y + 45, x + 260, y + 65}, {x + 270, y + 45, x + 290, y + 65} });
 
+	settings_interface.add_input_field(&g.mutation_chance, 0, 16, x + 220, y + 70, x + 300, y + 90);
+
 	settings_interface.add_window_rectangle(0.5, x - 5, y - 85, x + 305, y - 10);
 	settings_interface.add_window_rectangle(0.5, x - 5, y, x + 305, y + 100);
 
@@ -421,8 +423,11 @@ int main() {
 					if (was_switched(name_visibility_switch, settings_interface, event)) {
 						name_visibility_mode = name_visibility_switch->mode;
 					}
+					if (was_switched(recombination_switch, settings_interface, event)) {
+						g.use_recombination = recombination_switch->mode;
+					}
 				}
-				settings_interface_input_callback(window, results_interface, g, event);
+				settings_interface_input_callback(window, settings_interface, g, event);
 				break;
 			}
 			if (can_press_mouse_button(event)) {

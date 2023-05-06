@@ -29,6 +29,8 @@ public:
 
 	int points = 0; //количество пунктов
 	int attempt = 1; //номер генерации
+	int mutation_chance = 100;
+	bool use_recombination = false;
 
 	struct Point { //пункт
 		std::vector<float> connections;
@@ -56,6 +58,7 @@ public:
 		float user_result = 0.f;
 	};
 	std::vector<Route> generation; //популяция со всеми особями
+	std::vector<Route> new_routes;
 	std::vector<Route> best_results; //лучшие пути среди всех генераций
 
 	int amount = 20; //количество особей
@@ -102,6 +105,8 @@ public:
 	friend std::ostream& operator<< (std::ostream&, const Route&);
 	//Мутация конкретного маршрута
 	void mutation(Route&);
+
+	void recombination();
 	//Подсчёт результатов маршрута
 	void count_result(Route&);
 	//Подсчёт результатов пользователя для всех маршрутов

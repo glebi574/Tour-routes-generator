@@ -141,10 +141,52 @@ void Population::mutation(Route& g) {
 	}
 }
 
+void Population::recombination() {
+	for (int _ = 0; _ < 100; ++_) {
+		bool correct = true;
+		int a = 1, b = 1;
+		while (a == b) {
+			a = random(0, generation.size() - 1);
+			b = random(0, generation.size() - 1);
+		}
+		int max_l = generation[a].path.size() > generation[b].path.size() ? generation[b].path.size() - 2 : generation[a].path.size() - 2;
+		int d = random(2, max_l), a1 = random(1, generation[a].path.size() - d), b1 = random(1, generation[b].path.size() - d);
+		Route route = generation[a];
+		for (int i = 0; i < d - 1; ++i) {
+			route.path[a1 + i] = generation[b].path[b1 + i];
+		}
+		for (int i = 1; i < route.path.size() - 1; ++i) {
+			for (int n = i + 1; n < route.path.size() - 1; ++n) {
+				if (route.path[i] == route.path[n]) {
+					correct = false;
+					break;
+				}
+			}
+		}
+		if (!(correct && check_exceptions(route.path)))
+			continue;
+		route.absent.clear();
+		update_absent(route);
+		new_routes.insert(new_routes.end(), route);
+		return;
+	}
+}
+
 void Population::cycle() {
-	for (auto& g : generation)
-		do mutation(g);
-	while (!check_exceptions(g.path));
+	if (use_recombination) {
+		for (int i = 0; i < amount / 2; ++i) {
+			recombination();
+		}
+		for (auto& g : generation)
+			count_result(g);
+		count_user_results();
+		std::sort(generation.begin(), generation.end(), [](const Route& a, const Route& b) {return a.user_result > b.user_result; });
+		for (int i = 0; i < new_routes.size(); ++i) {
+			generation[generation.size() - 1 - i] = new_routes[i];
+		}
+		new_routes.clear();
+	}
+	for (auto& g : generation) do if(chance(mutation_chance)) mutation(g); while (!check_exceptions(g.path));
 	for (auto& g : generation)
 		count_result(g);
 	count_user_results();
@@ -211,7 +253,7 @@ void Population::cycle() {
 
 }
 
-void Population::update_absent(Route& g) {
+void Population::update_absent(Route& g) { //Добавляет пункты, которые не были найдены, как отсутствующие(не очищает массив отсутствующих пунктов)
 	for (int i = 0; i < points; ++i)
 		if (find(g.path, i) == -1)
 			g.absent.push_back(i);
@@ -476,7 +518,7 @@ void Population::load_settings() {
 	path_width = lua_tonumber(L, -4);
 	path_outline_thickness = lua_tonumber(L, -3);
 	draw_points_first = lua_tonumber(L, -2);
-	do_log = lua_tonumber(L, -1);
+	do_log = lua_toboolean(L, -1);
 
 	lua_pop(L, 6);
 	
